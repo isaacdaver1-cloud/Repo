@@ -185,14 +185,56 @@ function start() {
   const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.795, 0.795, 0.14, 48, 1, true), finMat);
   stripe.position.y = 1.55;
   rocket.add(stripe);
-  // porthole
+  // porthole: textured bolted frame + domed glass with a custom shader
   const port = new THREE.Group();
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 12, 32), darkMat);
-  const glass = new THREE.Mesh(
-    new THREE.CircleGeometry(0.2, 32),
-    new THREE.MeshStandardMaterial({ color: 0x0b2b30, emissive: 0x86e3ea, emissiveIntensity: 0.9, roughness: 0.35 })
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.22, 0.052, 24, 64),
+    new THREE.MeshStandardMaterial({
+      map: tex.ring.map, bumpMap: tex.ring.bump, bumpScale: 2.5, roughnessMap: tex.ring.rough, roughness: 1, metalness: 0.75,
+    })
   );
-  glass.position.z = 0.01;
+  const glassMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: `
+      varying vec3 vN; varying vec3 vV; varying vec3 vLocal;
+      void main(){
+        vLocal = position;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vN = normalize(mat3(modelMatrix) * normal);
+        vV = normalize(cameraPosition - wp.xyz);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      varying vec3 vN; varying vec3 vV; varying vec3 vLocal;
+      uniform float uTime;
+      void main(){
+        vec3 N = normalize(vN), V = normalize(vV);
+        float ndv = clamp(dot(N, V), 0.0, 1.0);
+        float fres = pow(1.0 - ndv, 3.0);
+        // cockpit seen through tinted glass: dark teal with a soft cyan glow in the middle
+        float r = length(vLocal.xy) / 0.19;
+        vec3 inside = mix(vec3(0.42, 0.85, 0.88), vec3(0.02, 0.10, 0.12), smoothstep(0.0, 1.0, r));
+        inside *= 0.85 + 0.15 * sin(uTime * 1.7);
+        // fake reflection of the nebula and space around the rocket
+        vec3 R = reflect(-V, N);
+        vec3 env = mix(vec3(0.05, 0.02, 0.04), vec3(0.95, 0.45, 0.2), smoothstep(-0.2, 0.8, R.y));
+        env += vec3(1.0, 0.85, 0.65) * pow(max(dot(R, normalize(vec3(0.5, 0.7, 0.6))), 0.0), 60.0) * 2.0;
+        // classic diagonal glass sheen streaks
+        float d = vLocal.x * 0.8 + vLocal.y;
+        float streak = smoothstep(0.035, 0.0, abs(d - 0.07)) * 0.55 + smoothstep(0.012, 0.0, abs(d - 0.12)) * 0.4;
+        streak *= smoothstep(1.0, 0.6, r);
+        vec3 col = mix(inside, env, 0.25 + 0.6 * fres) + streak;
+        // darker rim where glass meets the frame
+        col *= mix(1.0, 0.45, smoothstep(0.8, 1.0, r));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  // shallow dome: a sphere cap pointing out of the hull
+  const domeGeo = new THREE.SphereGeometry(0.2, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+  domeGeo.rotateX(Math.PI / 2);
+  domeGeo.scale(1, 1, 0.3);
+  const glass = new THREE.Mesh(domeGeo, glassMat);
+  glass.position.z = -0.01;
   port.add(ring, glass);
   port.position.set(0, 2.15, 0.8);
   rocket.add(port);
@@ -520,6 +562,7 @@ function start() {
     flame.rotation.y = Math.atan2(camera.position.x - flame.position.x, camera.position.z);
     flameMat.uniforms.uThrust.value = thrust;
     flameMat.uniforms.uTime.value = time;
+    glassMat.uniforms.uTime.value = time;
     glow.position.set(rocket.position.x, rocketY - 0.35, 0.2);
     const gs = 3.2 * thrust * (0.95 + Math.random() * 0.1);
     glow.scale.set(gs, gs, 1);
@@ -750,5 +793,48 @@ function makeRocketTextures(aniso) {
     return { map: finish(cc, true), bump: finish(bc) };
   })();
 
-  return { hull, nose, fin, nozzle };
+  // ---- window frame: worn gunmetal with bolts ----
+  const ring = (() => {
+    const W = 512, H = 128;
+    const [cc, c] = canvas(W, H), [bc, b] = canvas(W, H), [rc, r] = canvas(W, H);
+    c.fillStyle = "#3a3634"; c.fillRect(0, 0, W, H);
+    mottle(c, W, H, 160, ["90,84,80", "24,20,20", "70,60,52"], 6, 26, 0.5);
+    b.fillStyle = "#808080"; b.fillRect(0, 0, W, H);
+    r.fillStyle = "rgb(150,150,150)"; r.fillRect(0, 0, W, H);
+    // scratches and worn edges
+    for (let i = 0; i < 220; i++) {
+      const x0 = rnd() * W, y0 = rnd() * H, len = 4 + rnd() * 24;
+      c.strokeStyle = `rgba(190,180,170,${(0.1 + rnd() * 0.3).toFixed(2)})`; c.lineWidth = 0.6 + rnd();
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + len, y0 + (rnd() - 0.5) * 6); c.stroke();
+      r.strokeStyle = "rgba(90,90,90,0.6)"; r.beginPath(); r.moveTo(x0, y0); r.lineTo(x0 + len, y0); r.stroke();
+    }
+    // inner and outer lips (tube angle v: 0 outer edge, 0.25 front face, 0.5 inner edge)
+    for (const v of [0.08, 0.42]) {
+      const y = H - v * H;
+      c.fillStyle = "rgba(180,170,160,0.35)"; c.fillRect(0, y - 1, W, 2);
+      b.fillStyle = "#b0b0b0"; b.fillRect(0, y - 2, W, 4);
+    }
+    // eight bolts on the front face
+    const yb = H - 0.25 * H;
+    for (let k = 0; k < 8; k++) {
+      const x0 = (k + 0.5) * (W / 8);
+      for (const off of [0, W, -W]) {
+        const gx = x0 + off;
+        const g = c.createRadialGradient(gx - 2, yb - 3, 0, gx, yb, 9);
+        g.addColorStop(0, "#c9c2ba"); g.addColorStop(0.5, "#6f6862"); g.addColorStop(1, "#1b1817");
+        c.fillStyle = g; c.beginPath(); c.arc(gx, yb, 8, 0, 7); c.fill();
+        c.strokeStyle = "rgba(20,16,15,0.9)"; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(gx - 5, yb); c.lineTo(gx + 5, yb); c.stroke();
+        const bg = b.createRadialGradient(gx, yb, 0, gx, yb, 10);
+        bg.addColorStop(0, "#fff"); bg.addColorStop(0.8, "#bbb"); bg.addColorStop(1, "#808080");
+        b.fillStyle = bg; b.beginPath(); b.arc(gx, yb, 10, 0, 7); b.fill();
+        r.fillStyle = "rgb(90,90,90)"; r.beginPath(); r.arc(gx, yb, 8, 0, 7); r.fill();
+      }
+    }
+    streaks(c, W, H, [H * 0.3, H * 0.6], "15,10,8", 60);
+    grain(c, W, H, 16); grain(b, W, H, 10);
+    return { map: finish(cc, true), bump: finish(bc), rough: finish(rc) };
+  })();
+
+  return { hull, nose, fin, nozzle, ring };
 }
