@@ -9,6 +9,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,6 +63,19 @@ async function walk(dir) {
 const asText = (v) => (typeof v === "object" ? JSON.stringify(v) : String(v));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// Each stylesheet and script URL gets ?v=<hash of its content>, so browsers always
+// fetch the new file after a deploy instead of using an old cached copy.
+const versions = {};
+async function versionOf(urlPath) {
+  if (!(urlPath in versions)) {
+    try {
+      const buf = await fs.readFile(path.join(SRC, urlPath));
+      versions[urlPath] = createHash("sha1").update(buf).update(JSON.stringify(config)).digest("hex").slice(0, 10);
+    } catch { versions[urlPath] = null; }
+  }
+  return versions[urlPath];
+}
+
 async function fillTemplate(html) {
   // shared partials
   html = await replaceAsync(html, /<!--\s*@include\s+([\w.-]+)\s*-->/g, async (_, file) =>
@@ -71,6 +85,10 @@ async function fillTemplate(html) {
     (_, key, yes, no = "") => (config[key] ? yes : no));
   // {{key}}
   html = html.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, key) => (key in config ? esc(asText(config[key])) : m));
+  html = await replaceAsync(html, /((?:href|src)=")(\/assets\/(?:css|js)\/[\w.-]+\.(?:css|js))"/g, async (_, attr, url) => {
+    const v = await versionOf(url);
+    return `${attr}${url}${v ? "?v=" + v : ""}"`;
+  });
   return html;
 }
 
