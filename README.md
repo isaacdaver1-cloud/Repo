@@ -28,6 +28,7 @@ Open `site.config.json` and fill in your real details. Every page reads from it.
 | `discordUrl` | Optional community link. Leave empty to hide the button. |
 | `governingLaw` | The country whose law governs the terms. |
 | `policyEffectiveDate` | Change this whenever you change the privacy policy or terms. |
+| `musicTracks` | Your own songs for the record player (see below). Leave as `[]` to use only the built-in tracks. |
 
 Also read the privacy policy and check it matches what your game really does.
 It is written for a Unity game using Photon PUN, Photon Voice and PlayFab with
@@ -67,6 +68,24 @@ npm run build         # full production build into dist/
 - Screenshots: `src/assets/img/` (a `.jpg` and a `.webp` of each)
 
 `{{name}}` in any page is replaced with the matching value from `site.config.json`.
+
+## Music player
+
+The record player in the bottom-left corner comes with three built-in synthwave tracks
+(Nebula Drift, Arena Pulse, Station Night) that are generated live in the browser, so
+there are no audio files and no licensing issues.
+
+To add your own songs, put MP3 files in `src/assets/music/` and list them in
+`site.config.json`. They play before the built-in tracks:
+
+```json
+"musicTracks": [
+  { "title": "Echo Main Theme", "file": "/assets/music/main-theme.mp3" },
+  { "title": "Arena Fight", "file": "/assets/music/arena-fight.mp3" }
+]
+```
+
+Only use music you made yourself or have a licence to use on a website.
 
 ## Copy protection
 

@@ -8,7 +8,8 @@
   var pref = null;
   try { pref = window.localStorage.getItem(KEY); } catch (e) { /* storage blocked */ }
   var wanted = pref !== "off";       // visitor hasn't muted
-  var ctx = null, master = null, noise = null, enabled = false;
+  var ctx = null, master = null, musicOut = null, noise = null, enabled = false;
+  var musicActive = false;
   var engine = null, lastThrust = 0;
   var button = null, label = null;
 
@@ -21,9 +22,13 @@
     ctx = new AC();
     var comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16; comp.ratio.value = 4;
-    master = ctx.createGain();
-    master.gain.value = 0.55;
-    master.connect(comp); comp.connect(ctx.destination);
+    master = ctx.createGain();            // interface + rocket sounds (the sound button)
+    master.gain.value = enabled ? 0.55 : 0;
+    master.connect(comp);
+    musicOut = ctx.createGain();          // music player, has its own volume
+    musicOut.gain.value = 1;
+    musicOut.connect(comp);
+    comp.connect(ctx.destination);
     // 2 seconds of white noise to reuse everywhere
     noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     var d = noise.getChannelData(0);
@@ -41,10 +46,11 @@
     if (!build()) return;
     if (ctx.state === "suspended") ctx.resume();
     enabled = true; setUI();
+    master.gain.setTargetAtTime(0.55, ctx.currentTime, 0.02);
   }
   function disable() {
     enabled = false; setUI();
-    if (ctx) ctx.suspend();
+    if (ctx) master.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
   }
 
   // ---------- building blocks ----------
@@ -182,7 +188,8 @@
 
   document.addEventListener("visibilitychange", function () {
     if (!ctx) return;
-    if (document.hidden) ctx.suspend(); else if (enabled) ctx.resume();
+    if (document.hidden) { if (!musicActive) ctx.suspend(); }
+    else if (enabled || musicActive) ctx.resume();
   });
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -214,5 +221,15 @@
     if (box) box.addEventListener("cancel", function () { play("close"); });
   });
 
-  window.echoSound = { play: play, engine: updateEngine };
+  window.echoSound = {
+    play: play,
+    engine: updateEngine,
+    // used by the music player: shared audio context and its output
+    music: function () {
+      if (!build()) return null;
+      if (ctx.state === "suspended") ctx.resume();
+      return { ctx: ctx, out: musicOut, noise: noise };
+    },
+    setMusicActive: function (v) { musicActive = !!v; },
+  };
 })();

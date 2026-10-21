@@ -6,6 +6,34 @@
   <div class="fx__scan"></div>
 </div>
 <a class="skip" href="#main">Skip to content</a>
+<section class="player" id="player" aria-label="Music player" data-tracks="{{musicTracks}}">
+  <canvas class="player__bars" id="player-bars" aria-hidden="true"></canvas>
+  <div class="player__body">
+    <div class="player__deck" aria-hidden="true">
+      <div class="player__record"><span class="player__label">ECHO</span></div>
+      <span class="player__arm"></span>
+    </div>
+    <div class="player__info">
+      <p class="player__title" id="player-title" aria-live="polite">Nebula Drift</p>
+      <div class="player__controls">
+        <button class="player__btn" type="button" id="player-prev" aria-label="Previous track">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="player__btn player__btn--main" type="button" id="player-play" aria-label="Play music">
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+          <svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+        </button>
+        <button class="player__btn" type="button" id="player-next" aria-label="Next track">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="player__btn" type="button" id="player-mute" aria-label="Mute music" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="i-waves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="i-cross" d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <input class="player__vol" id="player-vol" type="range" min="0" max="100" value="70" aria-label="Music volume">
+      </div>
+    </div>
+  </div>
+</section>
 <button class="sound" id="sound-toggle" type="button" aria-pressed="false">
   <svg class="sound__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>

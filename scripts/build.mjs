@@ -59,6 +59,7 @@ async function walk(dir) {
   return out;
 }
 
+const asText = (v) => (typeof v === "object" ? JSON.stringify(v) : String(v));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function fillTemplate(html) {
@@ -69,7 +70,7 @@ async function fillTemplate(html) {
   html = html.replace(/<!--\s*if:(\w+)\s*-->([\s\S]*?)(?:<!--\s*else:\1\s*-->([\s\S]*?))?<!--\s*endif:\1\s*-->/g,
     (_, key, yes, no = "") => (config[key] ? yes : no));
   // {{key}}
-  html = html.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, key) => (key in config ? esc(config[key]) : m));
+  html = html.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, key) => (key in config ? esc(asText(config[key])) : m));
   return html;
 }
 
