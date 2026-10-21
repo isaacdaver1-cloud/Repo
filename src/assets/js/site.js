@@ -225,6 +225,54 @@
   // coming back with the browser's back button: undo the fade-out
   window.addEventListener("pageshow", function () { document.documentElement.classList.remove("leaving"); });
 
+  // ---------- Discord links: open the Discord app if it's installed, otherwise the browser ----------
+  (function () {
+    var ua = navigator.userAgent || "";
+    var isAndroid = /Android/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    function inviteCode(href) {
+      var m = /(?:discord\.gg|discord(?:app)?\.com\/invite)\/([\w-]+)/i.exec(href);
+      return m ? m[1] : null;
+    }
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest && e.target.closest("a[href]");
+      if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var code = inviteCode(link.href);
+      if (!code) return;
+      e.preventDefault();
+      var web = "https://discord.com/invite/" + code;
+
+      if (isAndroid) {
+        // Android: open the app directly, and Android itself falls back to the browser if it isn't installed
+        location.href = "intent://discord.com/invite/" + code +
+          "#Intent;scheme=https;package=com.discord;S.browser_fallback_url=" + encodeURIComponent(web) + ";end";
+        return;
+      }
+      if (isIOS) {
+        // iPhone/iPad: discord.com invite links open in the app when it's installed, Safari otherwise
+        location.href = web;
+        return;
+      }
+
+      // Computers: try the Discord desktop app. If the page doesn't lose focus quickly
+      // (meaning nothing opened), open the invite in a new browser tab instead.
+      var opened = false;
+      function gone() { opened = true; }
+      window.addEventListener("blur", gone, { once: true });
+      document.addEventListener("visibilitychange", gone, { once: true });
+      var frameless = document.createElement("a");
+      frameless.href = "discord://-/invite/" + code;
+      frameless.click();
+      setTimeout(function () {
+        window.removeEventListener("blur", gone);
+        document.removeEventListener("visibilitychange", gone);
+        if (opened || !document.hasFocus()) return;
+        var tab = window.open(web, "_blank", "noopener");
+        if (!tab) location.href = web; // pop-up blocked: open it here instead
+      }, 900);
+    }, true);
+  })();
+
   // ---------- floating space dust in the background ----------
   var dust = document.getElementById("fx-dust");
   if (dust && dust.getContext) {
