@@ -209,6 +209,70 @@ html.leaving body { opacity: 0; transition: opacity 0.22s ease-in; }
 .bar__links { display: flex; gap: clamp(12px, 3vw, 28px); align-items: center; }
 .bar__links a { color: var(--text); text-decoration: none; font-weight: 700; font-size: var(--step--1); }
 .bar__links a:hover { color: var(--tube); }
+.bar__links a[aria-current] { color: var(--tube); }
+.bar__inner { position: relative; }
+.bar__links a { position: relative; padding: 8px 0; }
+
+/* liquid underline under the current link */
+.bar__ink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--tube);
+  box-shadow: 0 0 8px rgba(242, 227, 74, 0.8), 0 0 18px rgba(242, 227, 74, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.bar__ink.on { opacity: 1; }
+
+/* glow that races to the clicked link */
+.bar__spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: #fffbe0;
+  box-shadow: 0 0 10px 3px var(--tube), 0 0 26px 8px rgba(242, 227, 74, 0.55), -18px 0 22px 2px rgba(242, 227, 74, 0.25);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* lightning along the bar */
+.bar__bolt {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+}
+.bar__bolt path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.bar__bolt-glow { stroke: var(--tube); stroke-width: 5; opacity: 0.55; filter: blur(3px); }
+.bar__bolt-core { stroke: #fffbe0; stroke-width: 1.6; }
+.bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(242, 227, 74, 0.12), rgba(134, 227, 234, 0.08), transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.bar.flash::after { animation: bar-flash 0.42s ease-out; }
+@keyframes bar-flash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  25% { opacity: 0.3; }
+  38% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
 .bar--solid { background: rgba(28, 11, 13, 0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: none; }
 @media (max-width: 560px) {

@@ -9,11 +9,14 @@
 <header class="bar" id="bar">
   <div class="wrap bar__inner">
     <a class="bar__brand" href="/" aria-label="{{gameName}} home">ECHO</a>
+    <svg class="bar__bolt" id="bar-bolt" aria-hidden="true"><path class="bar__bolt-glow"/><path class="bar__bolt-core"/></svg>
+    <span class="bar__spark" id="bar-spark" aria-hidden="true"></span>
+    <span class="bar__ink" id="bar-ink" aria-hidden="true"></span>
     <nav class="bar__links" aria-label="Main">
-      <a class="hide-sm" href="/#decks">The station</a>
-      <a class="hide-sm" href="/#crew">Play safe</a>
-      <a href="/support.html">Support</a>
-      <a href="/privacy.html">Privacy</a>
+      <a class="hide-sm" href="/#decks" data-nav="decks">The station</a>
+      <a class="hide-sm" href="/#crew" data-nav="crew">Play safe</a>
+      <a href="/support.html" data-nav="support">Support</a>
+      <a href="/privacy.html" data-nav="privacy">Privacy</a>
     </nav>
   </div>
 </header>
