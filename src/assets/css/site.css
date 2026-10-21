@@ -179,7 +179,7 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 }
 
 /* ===== launch ===== */
-.launch { position: relative; height: 360vh; background: #12060a; }
+.launch { position: relative; z-index: 2; height: 360vh; background: #12060a; }
 .launch__stage {
   position: sticky;
   top: 0;
@@ -269,13 +269,14 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 /* ===== below the clouds ===== */
 .under {
   position: relative;
+  z-index: 1;
   background:
     linear-gradient(180deg,
       var(--cloud) 0,
       #b59ea4 9vh,
       #7d5459 22vh,
-      #4a2024 36vh,
-      var(--hull) 58vh);
+      rgba(74, 32, 36, 0.85) 36vh,
+      rgba(28, 11, 13, 0) 62vh);
   padding-top: 18vh;
 }
 .under::before {
@@ -393,7 +394,7 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 }
 
 /* ----- crew / safety ----- */
-.crew { background: var(--hull-2); }
+.crew { background: rgba(42, 16, 19, 0.55); }
 .crew__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: clamp(32px, 6vw, 80px); }
 .rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 28px; }
 .rules li { padding-left: 22px; border-left: 3px solid var(--violet); }
@@ -429,7 +430,7 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 .faq details > div { padding: 0 0 22px; color: var(--muted); }
 
 /* ----- footer ----- */
-.foot { background: #12060a; padding: 64px 0 40px; border-top: 1px solid var(--line); font-size: var(--step--1); color: var(--muted); }
+.foot { position: relative; z-index: 1; background: rgba(18, 6, 10, 0.82); padding: 64px 0 40px; border-top: 1px solid var(--line); font-size: var(--step--1); color: var(--muted); }
 .foot__grid { display: grid; grid-template-columns: 1.4fr repeat(2, 1fr); gap: 36px; }
 .foot__brand { font-family: var(--display); font-weight: 900; font-size: 3rem; color: var(--text); line-height: 1; margin-bottom: 10px; }
 .foot h2 { font-family: var(--body); font-size: var(--step-0); font-weight: 700; color: var(--text); margin-bottom: 12px; }
@@ -482,8 +483,8 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 }
 
 /* ===== document pages ===== */
-.doc-page { padding-top: 64px; }
-.doc-head { background: linear-gradient(180deg, var(--hull-2), var(--hull)); padding: clamp(56px, 9vw, 110px) 0 40px; border-bottom: 1px solid var(--line); }
+.doc-page { position: relative; z-index: 1; padding-top: 64px; }
+.doc-head { background: linear-gradient(180deg, rgba(42, 16, 19, 0.8), rgba(28, 11, 13, 0)); padding: clamp(56px, 9vw, 110px) 0 40px; border-bottom: 1px solid var(--line); }
 .doc-head h1 { font-size: clamp(3rem, 8vw, 6rem); margin-bottom: 0.2em; }
 .doc-head p { color: var(--muted); margin: 0; }
 .doc { padding: 48px 0 96px; }
@@ -494,7 +495,7 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
 .doc ul, .doc ol { padding-left: 1.3em; max-width: 68ch; }
 .doc li { margin-bottom: 0.45em; }
 .doc li::marker { color: var(--amber); }
-.doc .toc { background: var(--hull-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin: 8px 0 32px; }
+.doc .toc { background: rgba(42, 16, 19, 0.75); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin: 8px 0 32px; }
 .doc .toc h2 { font-family: var(--body); font-size: var(--step-0); margin: 0 0 8px; padding: 0; }
 .doc .toc ol { margin: 0; columns: 2 260px; }
 .doc .callout { border-left: 3px solid var(--tube); background: rgba(242, 227, 74, 0.06); padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 24px 0; }
@@ -521,9 +522,60 @@ html.launching .bar { opacity: 0; transform: translateY(-100%); pointer-events: 
   font-weight: 700;
 }
 
+/* ===== background atmosphere ===== */
+.fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.fx > * { position: absolute; inset: 0; }
+.fx__light {
+  inset: -20%;
+  background:
+    radial-gradient(38% 32% at 82% 18%, rgba(232, 100, 42, 0.16), transparent 70%),
+    radial-gradient(34% 40% at 8% 55%, rgba(176, 92, 242, 0.11), transparent 70%),
+    radial-gradient(30% 22% at 55% 100%, rgba(242, 227, 74, 0.07), transparent 70%),
+    radial-gradient(26% 26% at 30% 12%, rgba(134, 227, 234, 0.05), transparent 70%);
+  filter: blur(20px);
+  animation: fx-drift 46s ease-in-out infinite alternate, fx-breathe 9s ease-in-out infinite alternate;
+}
+@keyframes fx-drift {
+  from { transform: translate3d(-2%, -1%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.06); }
+}
+@keyframes fx-breathe { from { opacity: 0.8; } to { opacity: 1; } }
+.fx__grid {
+  background-image:
+    linear-gradient(rgba(134, 227, 234, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 227, 234, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(134, 227, 234, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 227, 234, 0.025) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 10%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 10%, transparent 80%);
+}
+.fx__dust { width: 100%; height: 100%; }
+.fx__noise {
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.045;
+  animation: fx-grain 0.9s steps(6) infinite;
+}
+@keyframes fx-grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -5%); }
+  60% { transform: translate(-6%, -2%); }
+  80% { transform: translate(5%, 4%); }
+  100% { transform: translate(0, 0); }
+}
+.fx__scan {
+  background:
+    linear-gradient(180deg, transparent 0, rgba(255, 255, 255, 0.025) 50%, transparent 100%) 0 -30vh / 100% 30vh no-repeat,
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 3px);
+  animation: fx-roll 9s linear infinite;
+}
+@keyframes fx-roll { to { background-position: 0 130vh, 0 0; } }
+
 /* ===== reduced motion / no WebGL ===== */
 html.no-launch .launch { display: none; }
-html.no-launch .under { padding-top: 140px; background: linear-gradient(180deg, var(--hull-2), var(--hull) 60vh); }
+html.no-launch .under { padding-top: 140px; background: linear-gradient(180deg, rgba(42, 16, 19, 0.8), rgba(28, 11, 13, 0) 60vh); }
 html.no-launch .under::before { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
