@@ -782,6 +782,38 @@ html.launching .sound[aria-pressed="false"] { animation: sound-nudge 2.4s ease-i
   .player__btn { width: 30px; height: 30px; }
 }
 
+/* ===== scrollbar ===== */
+/* Chrome, Edge, Safari, Opera: a neon tube sliding in a dark rail */
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track {
+  background:
+    linear-gradient(90deg, transparent 5px, rgba(242, 227, 74, 0.08) 5px 9px, transparent 9px),
+    linear-gradient(90deg, #0d0507, #1c0b0d 50%, #0d0507);
+  border-left: 1px solid rgba(246, 235, 230, 0.08);
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.35) 0 4px, transparent 4px 8px) padding-box,
+    linear-gradient(90deg, #c9b52a, #fff07a 45%, #f2e34a 60%, #b8a224) padding-box;
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.4);
+}
+::-webkit-scrollbar-thumb:hover {
+  background:
+    repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.3) 0 4px, transparent 4px 8px) padding-box,
+    linear-gradient(90deg, #e0cc3a, #fffbc0 45%, #fff07a 60%, #d4bc30) padding-box;
+}
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(90deg, var(--ember), #ffb070 50%, var(--ember)) padding-box;
+}
+::-webkit-scrollbar-button { display: none; }
+::-webkit-scrollbar-corner { background: #0d0507; }
+/* Firefox only (Chrome ignores the styles above if scrollbar-color is set) */
+@supports (-moz-appearance: none) {
+  html { scrollbar-color: var(--tube) #12060a; scrollbar-width: auto; }
+}
+
 /* ===== background atmosphere ===== */
 .fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .fx > * { position: absolute; inset: 0; }
