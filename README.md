@@ -73,17 +73,16 @@ npm run build         # full production build into dist/
 ## Contact form
 
 Every email link on the site opens `/contact.html`, where visitors pick a reason,
-write a description and press Send. Messages are delivered to `contactEmail`'s
-inbox by [FormSubmit](https://formsubmit.co), which needs no account.
+write a description and press Send. Their own email is optional. Messages go to
+hivemindgeneration@gmail.com.
 
-**One-time setup:** after the site deploys, send yourself a test message from the
-contact page. FormSubmit emails an activation link to hivemindgeneration@gmail.com.
-Click it, and every message after that arrives in the inbox. Messages sent before
-you activate are not delivered.
+Sending uses [Web3Forms](https://web3forms.com) when `web3formsKey` is set in
+`site.config.json` (free, 250 messages a month), and falls back to
+[FormSubmit](https://formsubmit.co) if Web3Forms fails or no key is set.
 
-To hide the email address from the page source, FormSubmit's activation email gives
-you a random code. Put it in `contactFormId` in `site.config.json` instead of the
-email address.
+**To get a Web3Forms key:** go to web3forms.com, enter hivemindgeneration@gmail.com
+and create an access key. It arrives by email. Put it in `web3formsKey`. The key is
+meant to be public, so it's fine in the page.
 
 ## Music player
 

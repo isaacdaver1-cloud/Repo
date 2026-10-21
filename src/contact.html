@@ -15,13 +15,13 @@
   <header class="doc-head">
     <div class="wrap">
       <h1>Contact us</h1>
-      <p>Pick a reason, tell us what's going on, and we'll reply to your email, usually within 3 working days.</p>
+      <p>Pick a reason, tell us what's going on and press Send. It goes straight to the team.</p>
     </div>
   </header>
 
   <article class="doc">
     <div class="wrap">
-      <form class="contact" id="contact-form" data-endpoint="https://formsubmit.co/ajax/{{contactFormId}}" novalidate>
+      <form class="contact" id="contact-form" data-endpoint="https://formsubmit.co/ajax/{{contactFormId}}" data-key="{{web3formsKey}}" novalidate>
         <fieldset class="contact__reasons">
           <legend>What's it about?</legend>
           <div class="chips">
@@ -42,9 +42,9 @@
         <p class="contact__hint" id="reason-hint" hidden></p>
 
         <div class="field">
-          <label for="c-email">Your email</label>
-          <input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" aria-describedby="c-email-help">
-          <p class="field__help" id="c-email-help">So we can reply. We only use it to answer this message.</p>
+          <label for="c-email">Your email <span class="field__opt">(optional)</span></label>
+          <input id="c-email" name="email" type="email" autocomplete="email" maxlength="200" aria-describedby="c-email-help">
+          <p class="field__help" id="c-email-help">Only add it if you want a reply. We only use it to answer this message.</p>
           <p class="field__error" id="c-email-error" hidden>Enter an email address like name@example.com.</p>
         </div>
 
@@ -66,7 +66,7 @@
           <input id="c-honey" name="_honey" type="text" tabindex="-1" autocomplete="off">
         </div>
 
-        <p class="contact__legal">By sending this, you agree that we receive what you write and your email address to answer you, as described in our <a href="/privacy.html#contact">privacy policy</a>.</p>
+        <p class="contact__legal">By sending this, you agree that we receive what you write, and your email if you add it, as described in our <a href="/privacy.html#contact">privacy policy</a>.</p>
 
         <div class="contact__actions">
           <button class="btn btn--tube" type="submit" id="c-send">Send message</button>
@@ -76,7 +76,7 @@
 
       <div class="contact__done" id="contact-done" hidden tabindex="-1">
         <h2>Message sent</h2>
-        <p>Thanks. We've got your message and will reply to the email you gave us.</p>
+        <p>Thanks, the team has your message. If you added your email, we'll reply there.</p>
         <p><button class="btn btn--ghost" type="button" id="c-again">Send another message</button></p>
       </div>
     </div>
