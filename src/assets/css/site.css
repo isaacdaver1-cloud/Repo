@@ -145,6 +145,43 @@ p { margin: 0 0 1em; max-width: 68ch; }
 }
 .btn--ghost:hover { background: rgba(134, 227, 234, 0.14); color: #c3f6fa; }
 .btn[aria-disabled="true"] { cursor: default; }
+.btn--outline {
+  position: relative;
+  color: var(--tube);
+  border-color: var(--tube);
+  background: rgba(242, 227, 74, 0.04);
+  box-shadow: 0 0 10px rgba(242, 227, 74, 0.22), inset 0 0 8px rgba(242, 227, 74, 0.1);
+  transition: box-shadow 0.25s, background 0.25s, color 0.25s, transform 0.15s;
+}
+.btn--outline:hover {
+  color: #fff7a8;
+  background: rgba(242, 227, 74, 0.1);
+  box-shadow: 0 0 18px rgba(242, 227, 74, 0.65), 0 0 44px rgba(242, 227, 74, 0.3), inset 0 0 14px rgba(242, 227, 74, 0.28);
+}
+.btn--outline::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--tube);
+  opacity: 0;
+  pointer-events: none;
+}
+.btn.is-pressing { animation: btn-press 0.42s cubic-bezier(0.3, 0.7, 0.4, 1.4); }
+.btn.is-pressing::after { animation: btn-pulse 0.55s 0.1s ease-out; }
+@keyframes btn-press {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.92); }
+  65% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+@keyframes btn-pulse {
+  0% { opacity: 0.95; transform: scale(1); box-shadow: 0 0 24px rgba(242, 227, 74, 0.9); }
+  100% { opacity: 0; transform: scale(1.35, 1.6); box-shadow: 0 0 40px rgba(242, 227, 74, 0); }
+}
+html.leaving body { opacity: 0; transition: opacity 0.22s ease-in; }
+.doc-page { animation: page-in 0.35s ease-out; }
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* ----- top bar ----- */
 .bar {

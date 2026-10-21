@@ -49,6 +49,24 @@
     });
   }
 
+  // ---------- press-and-pulse links: squeeze, glow, then go ----------
+  document.querySelectorAll("a[data-pulse]").forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) return;
+      e.preventDefault();
+      var href = link.href;
+      link.classList.remove("is-pressing");
+      void link.offsetWidth; // restart the animation if clicked twice
+      link.classList.add("is-pressing");
+      setTimeout(function () { document.documentElement.classList.add("leaving"); }, 380);
+      setTimeout(function () { window.location.href = href; }, 600);
+    });
+  });
+  // coming back with the browser's back button: undo the fade-out
+  window.addEventListener("pageshow", function () { document.documentElement.classList.remove("leaving"); });
+
   // ---------- floating space dust in the background ----------
   var dust = document.getElementById("fx-dust");
   if (dust && dust.getContext) {
