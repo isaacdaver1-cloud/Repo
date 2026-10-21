@@ -22,6 +22,28 @@ function start() {
 
   const small = Math.min(window.innerWidth, window.innerHeight) < 700;
 
+  // split the title into letters so each one can slam in on its own
+  if (title && !title.dataset.text) {
+    const text = title.textContent.trim();
+    title.dataset.text = text;
+    title.setAttribute("aria-label", text);
+    title.textContent = "";
+    let i = 0;
+    text.split(" ").forEach((word, w) => {
+      const ws = document.createElement("span");
+      ws.className = "word"; ws.setAttribute("aria-hidden", "true");
+      for (const ch of word) {
+        const s = document.createElement("span");
+        s.className = "ch"; s.textContent = ch;
+        s.style.setProperty("--i", String(i++));
+        s.style.setProperty("--r", ((Math.random() - 0.5) * 50).toFixed(1) + "deg");
+        ws.appendChild(s);
+      }
+      title.appendChild(ws);
+      if (w < text.split(" ").length - 1) title.appendChild(document.createTextNode(" "));
+    });
+  }
+
   // ---------- renderer ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.5 : 1.75));
@@ -90,6 +112,128 @@ function start() {
     }));
     scene.add(stars);
   }
+
+  // ---------- deep space set dressing: planet, the Echo station, asteroids, meteors ----------
+  const spaceTex = makeSpaceTextures(renderer.capabilities.getMaxAnisotropy());
+
+  // ringed gas giant
+  const planet = new THREE.Group();
+  {
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(14, 64, 48),
+      new THREE.MeshStandardMaterial({ map: spaceTex.planet, roughness: 0.9, metalness: 0 })
+    );
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(18, 30, 128, 1),
+      new THREE.MeshBasicMaterial({ map: spaceTex.ring, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+    );
+    // RingGeometry UVs are planar; remap so the texture runs from inner to outer edge
+    const pos = ring.geometry.attributes.position, uv = ring.geometry.attributes.uv, v3 = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) { v3.fromBufferAttribute(pos, i); uv.setXY(i, (v3.length() - 18) / 12, 0.5); }
+    ring.rotation.x = -Math.PI / 2.4;
+    ring.rotation.y = 0.35;
+    const atmo = new THREE.Mesh(
+      new THREE.SphereGeometry(14.8, 48, 32),
+      new THREE.MeshBasicMaterial({ color: 0xff8a4a, transparent: true, opacity: 0.12, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    planet.add(body, atmo, ring);
+    planet.position.set(-38, 26, -78);
+    planet.rotation.z = 0.25;
+  }
+  scene.add(planet);
+
+  // the Echo station, far away, turning slowly with blinking lights
+  const station = new THREE.Group();
+  const stationLights = [];
+  {
+    const hullM = new THREE.MeshStandardMaterial({ color: 0x8a5a4a, roughness: 0.7, metalness: 0.4 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.55, 16, 64), hullM);
+    const hub = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 16), hullM);
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 6, 12), hullM);
+    mast.rotation.x = Math.PI / 2;
+    station.add(ring, hub, mast);
+    for (let i = 0; i < 4; i++) {
+      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 4.2, 8), hullM);
+      spoke.rotation.z = (i / 4) * Math.PI * 2;
+      spoke.position.set(Math.sin(-spoke.rotation.z) * 2.1, Math.cos(spoke.rotation.z) * 2.1, 0);
+      station.add(spoke);
+    }
+    const tube = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.08, 8, 96), new THREE.MeshBasicMaterial({ color: 0xf2e34a }));
+    tube.position.z = 0.56;
+    station.add(tube);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xff4a3a : 0x86e3ea }));
+      l.position.set(Math.cos(a) * 4.2, Math.sin(a) * 4.2, 0.6);
+      l.userData.phase = Math.random() * 6;
+      station.add(l); stationLights.push(l);
+    }
+    station.position.set(30, 20, -62);
+    station.rotation.set(0.5, -0.6, 0);
+  }
+  scene.add(station);
+
+  // asteroids: lumpy low-poly rocks that tumble and drift past
+  const asteroids = [];
+  {
+    const rockMat = new THREE.MeshStandardMaterial({
+      map: spaceTex.rock, bumpMap: spaceTex.rockBump, bumpScale: 3, roughness: 0.95, metalness: 0.05, flatShading: true,
+    });
+    const count = small ? 9 : 18;
+    for (let i = 0; i < count; i++) {
+      const g = new THREE.IcosahedronGeometry(1, 2);
+      const p = g.attributes.position, v = new THREE.Vector3();
+      const f1 = 1.2 + Math.random() * 1.5, f2 = 3 + Math.random() * 3, ph = Math.random() * 10;
+      const squash = new THREE.Vector3(0.7 + Math.random() * 0.6, 0.6 + Math.random() * 0.5, 0.7 + Math.random() * 0.6);
+      for (let k = 0; k < p.count; k++) {
+        v.fromBufferAttribute(p, k);
+        const n = 1 + 0.22 * Math.sin(v.x * f1 + ph) * Math.cos(v.y * f1 * 1.3 + ph) + 0.08 * Math.sin(v.z * f2 + v.x * f2 + ph);
+        v.multiplyScalar(n).multiply(squash);
+        p.setXYZ(k, v.x, v.y, v.z);
+      }
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, rockMat);
+      const near = i < (small ? 2 : 4); // a few big ones close to the camera
+      const size = near ? 0.9 + Math.random() * 1.1 : 0.5 + Math.random() * 2.6;
+      m.scale.setScalar(size);
+      const side = Math.random() < 0.5 ? -1 : 1;
+      m.position.set(
+        near ? side * (7 + Math.random() * 5) : (Math.random() - 0.5) * 70,
+        near ? -1 + Math.random() * 9 : -4 + Math.random() * 40,
+        near ? 2 + Math.random() * 4 : -12 - Math.random() * 40
+      );
+      m.userData = {
+        spin: new THREE.Vector3((Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4),
+        drift: new THREE.Vector3((Math.random() - 0.5) * (near ? 0.9 : 0.5), (Math.random() - 0.5) * 0.25, 0),
+      };
+      scene.add(m); asteroids.push(m);
+    }
+  }
+
+  // shooting stars
+  const meteorMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uFade: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `varying vec2 vUv; uniform float uFade;
+      void main(){ float head = pow(vUv.x, 3.0); float w = 1.0 - abs(vUv.y - 0.5) * 2.0;
+        vec3 c = mix(vec3(1.0,0.5,0.2), vec3(1.0,0.97,0.85), head);
+        gl_FragColor = vec4(c, head * w * w * uFade); }`,
+  });
+  const meteor = new THREE.Mesh(new THREE.PlaneGeometry(14, 0.22), meteorMat);
+  meteor.visible = false;
+  scene.add(meteor);
+  const meteorState = { t: 0, next: 1.5, life: 0.9, from: new THREE.Vector3(), dir: new THREE.Vector3() };
+
+  // shockwave ring across the pad at ignition
+  const shock = new THREE.Mesh(
+    new THREE.RingGeometry(0.9, 1.2, 64),
+    new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  shock.rotation.x = -Math.PI / 2;
+  shock.position.y = 0.05;
+  scene.add(shock);
+  let shockT = -1, lastThrustForShock = 0;
 
   // ---------- lights ----------
   scene.add(new THREE.HemisphereLight(0xffb37a, 0x2a0a10, 0.7));
@@ -576,11 +720,45 @@ function start() {
     const dist = Math.max(14, 8.6 / Math.min(aspect, 1.2));
     px += (pointerX - px) * dt * 2; py += (pointerY - py) * dt * 2;
     const follow = Math.min(rocketY, 7) * 0.55;
-    const camShake = 0.05 * thrust * (1 - smooth(0.0, 0.5, lift));
+    const camShake = (0.09 * thrust + (shockT >= 0 ? 0.35 * (1 - shockT / 1.1) : 0)) * (1 - smooth(0.0, 0.5, lift));
     camera.position.set(px * 0.9 + (Math.random() - 0.5) * camShake, 1.6 + follow * 0.5 - py * 0.4 + (Math.random() - 0.5) * camShake, dist);
     camera.lookAt(0, 2.3 + follow, 0);
 
     nebula.material.uniforms.uTime.value = time;
+
+    // set dressing
+    planet.rotation.y += dt * 0.01;
+    station.rotation.z += dt * 0.12;
+    stationLights.forEach((l) => { l.visible = Math.sin(time * 3 + l.userData.phase) > -0.2; });
+    for (const a of asteroids) {
+      a.rotation.x += a.userData.spin.x * dt; a.rotation.y += a.userData.spin.y * dt; a.rotation.z += a.userData.spin.z * dt;
+      a.position.addScaledVector(a.userData.drift, dt);
+      if (a.position.x > 40) a.position.x = -40; else if (a.position.x < -40) a.position.x = 40;
+    }
+    meteorState.t += dt;
+    if (!meteor.visible && meteorState.t > meteorState.next) {
+      meteorState.t = 0; meteorState.life = 0.7 + Math.random() * 0.5;
+      meteorState.from.set(-30 + Math.random() * 60, 18 + Math.random() * 20, -30 - Math.random() * 15);
+      const ang = -0.35 - Math.random() * 0.5;
+      meteorState.dir.set(Math.cos(ang) * (Math.random() < 0.5 ? -1 : 1), Math.sin(ang), 0).normalize();
+      meteor.rotation.z = Math.atan2(meteorState.dir.y, meteorState.dir.x);
+      meteor.visible = true;
+    }
+    if (meteor.visible) {
+      const k = meteorState.t / meteorState.life;
+      meteor.position.copy(meteorState.from).addScaledVector(meteorState.dir, k * 45);
+      meteorMat.uniforms.uFade.value = Math.sin(Math.min(1, k) * Math.PI);
+      if (k >= 1) { meteor.visible = false; meteorState.t = 0; meteorState.next = 1.2 + Math.random() * 3; }
+    }
+    if (thrust > 0.15 && lastThrustForShock <= 0.15) shockT = 0;
+    lastThrustForShock = thrust;
+    if (shockT >= 0) {
+      shockT += dt;
+      const k = shockT / 1.1;
+      shock.scale.setScalar(1 + k * 22);
+      shock.material.opacity = Math.max(0, 0.9 * (1 - k));
+      if (k >= 1) { shockT = -1; shock.material.opacity = 0; }
+    }
 
     emitters(dt, { thrust, rocketY, bank, prevY: prevRocketY, lookY: 2.3 + follow });
     if (sound) sound.engine({ thrust, height: rocketY, bank, visible: true });
@@ -839,4 +1017,65 @@ function makeRocketTextures(aniso) {
   })();
 
   return { hull, nose, fin, nozzle, ring };
+}
+
+
+// ---------- textures for the planet, its ring and the asteroids ----------
+function makeSpaceTextures(aniso) {
+  let seed = 99;
+  const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return [c, c.getContext("2d")]; };
+  const fin = (c, srgb) => { const t = new THREE.CanvasTexture(c); t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(8, aniso || 1); return t; };
+
+  // planet: swirling ember and violet bands
+  const [pc, p] = mk(1024, 512);
+  const bands = ["#5a1a12", "#9a3a1c", "#d8662e", "#f0a13a", "#7a2a40", "#3a1430", "#b44a22", "#e8885a"];
+  let y = 0;
+  while (y < 512) {
+    const hgt = 8 + rnd() * 40;
+    p.fillStyle = bands[Math.floor(rnd() * bands.length)];
+    p.fillRect(0, y, 1024, hgt + 2);
+    y += hgt;
+  }
+  p.filter = "blur(6px)"; p.drawImage(pc, 0, 0); p.filter = "none";
+  for (let i = 0; i < 2400; i++) { // turbulence streaks
+    const x = rnd() * 1024, yy = rnd() * 512, len = 20 + rnd() * 120;
+    p.strokeStyle = `rgba(${rnd() < 0.5 ? "255,200,150" : "60,10,20"},${(rnd() * 0.12).toFixed(3)})`;
+    p.lineWidth = 1 + rnd() * 3;
+    p.beginPath(); p.moveTo(x, yy); p.quadraticCurveTo(x + len / 2, yy + (rnd() - 0.5) * 14, x + len, yy); p.stroke();
+  }
+  const sx = 640, sy = 300; // a big storm spot
+  const sg = p.createRadialGradient(sx, sy, 0, sx, sy, 60);
+  sg.addColorStop(0, "rgba(255,230,180,0.9)"); sg.addColorStop(0.5, "rgba(220,90,40,0.7)"); sg.addColorStop(1, "rgba(220,90,40,0)");
+  p.save(); p.translate(sx, sy); p.scale(1.8, 1); p.translate(-sx, -sy); p.fillStyle = sg; p.fillRect(sx - 70, sy - 70, 140, 140); p.restore();
+
+  // ring: thin bands with gaps
+  const [rc, r] = mk(512, 4);
+  for (let x = 0; x < 512; x++) {
+    const a = Math.max(0, 0.25 + 0.6 * Math.sin(x * 0.11) * Math.sin(x * 0.033 + 1) + (rnd() - 0.5) * 0.3) * (x < 20 || x > 490 ? 0.3 : 1);
+    const cgap = x > 300 && x < 318 ? 0.05 : 1;
+    r.fillStyle = `rgba(${230 - x * 0.1},${170 - x * 0.15},${120},${(a * cgap).toFixed(3)})`;
+    r.fillRect(x, 0, 1, 4);
+  }
+
+  // rock: grey-brown with craters
+  const [kc, k] = mk(512, 512), [bc, b] = mk(512, 512);
+  k.fillStyle = "#5e524c"; k.fillRect(0, 0, 512, 512);
+  b.fillStyle = "#808080"; b.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 900; i++) {
+    const x = rnd() * 512, yy = rnd() * 512, rr = 2 + rnd() * 18;
+    const g = k.createRadialGradient(x, yy, 0, x, yy, rr);
+    const col = rnd() < 0.5 ? "120,104,92" : "40,32,30";
+    g.addColorStop(0, `rgba(${col},0.5)`); g.addColorStop(1, `rgba(${col},0)`);
+    k.fillStyle = g; k.fillRect(x - rr, yy - rr, rr * 2, rr * 2);
+  }
+  for (let i = 0; i < 70; i++) { // craters: dark bowl with a bright rim
+    const x = rnd() * 512, yy = rnd() * 512, rr = 4 + rnd() * 22;
+    k.fillStyle = "rgba(30,24,22,0.55)"; k.beginPath(); k.arc(x, yy, rr, 0, 7); k.fill();
+    k.strokeStyle = "rgba(170,150,135,0.5)"; k.lineWidth = 2; k.beginPath(); k.arc(x - 1, yy - 1, rr, 3.6, 6.0); k.stroke();
+    const bg = b.createRadialGradient(x, yy, 0, x, yy, rr * 1.2);
+    bg.addColorStop(0, "#303030"); bg.addColorStop(0.8, "#707070"); bg.addColorStop(0.9, "#c0c0c0"); bg.addColorStop(1, "#808080");
+    b.fillStyle = bg; b.beginPath(); b.arc(x, yy, rr * 1.2, 0, 7); b.fill();
+  }
+  return { planet: fin(pc, true), ring: fin(rc, true), rock: fin(kc, true), rockBump: fin(bc, false) };
 }
