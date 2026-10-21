@@ -1,5 +1,53 @@
 // Contact form: checks the fields, then sends the message to the team's inbox through
 // FormSubmit (formsubmit.co), so visitors don't need their own email app or account.
+// "Out of order" sign: the words drawn small, then shaded with an ordered (Bayer) dither and
+// scaled up with hard pixels, with the odd neon flicker.
+(function () {
+  "use strict";
+  var c = document.getElementById("ooo-sign");
+  if (!c || !c.getContext) return;
+  var W = 300, H = 64;
+  c.width = W; c.height = H;
+  var g = c.getContext("2d");
+  var bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var mask = document.createElement("canvas"); mask.width = W; mask.height = H;
+  var m = mask.getContext("2d", { willReadFrequently: true });
+  var src = null;
+  function drawMask() {
+    m.clearRect(0, 0, W, H);
+    m.fillStyle = "#fff";
+    m.textAlign = "center"; m.textBaseline = "middle";
+    m.font = "900 50px 'Big Shoulders', Impact, sans-serif";
+    m.fillText("OUT OF ORDER", W / 2, H / 2 + 2, W - 8);
+    src = m.getImageData(0, 0, W, H).data; // the letters never change, so read them once
+  }
+  var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function render(t) {
+    var out = g.createImageData(W, H), d = out.data;
+    var flick = still ? 1 : (Math.random() < 0.04 ? 0.35 : 1);
+    for (var y = 0; y < H; y++) {
+      for (var x = 0; x < W; x++) {
+        var i = (y * W + x) * 4;
+        var cover = src[i + 3] / 255;
+        if (cover < 0.5) continue;
+        // brightness: brighter in the middle rows, with a slow moving band like a failing tube
+        var v = 1 - Math.abs(y - H / 2) / (H / 2) * 0.75;
+        v *= 0.75 + 0.25 * Math.sin(x * 0.04 + t * 0.002);
+        v *= flick;
+        var threshold = (bayer[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        if (v > threshold) { d[i] = 242; d[i + 1] = 200; d[i + 2] = 31; }
+        else { d[i] = 150; d[i + 1] = 40; d[i + 2] = 20; }
+        d[i + 3] = 255;
+      }
+    }
+    g.putImageData(out, 0, 0);
+  }
+  function loop(t) { render(t); if (!still) setTimeout(function () { requestAnimationFrame(loop); }, 90); }
+  var start = function () { drawMask(); requestAnimationFrame(loop); };
+  if (document.fonts && document.fonts.ready) document.fonts.load("900 50px 'Big Shoulders'").then(start, start);
+  else start();
+})();
+
 (function () {
   "use strict";
   var form = document.getElementById("contact-form");

@@ -15,12 +15,27 @@
   <header class="doc-head">
     <div class="wrap">
       <h1>Contact us</h1>
+      <!-- if:contactFormOpen -->
       <p>Pick a reason, tell us what's going on and press Send. It goes straight to the team.</p>
+      <!-- else:contactFormOpen -->
+      <p>The form is being fixed. For now, reach the team on Discord.</p>
+      <!-- endif:contactFormOpen -->
     </div>
   </header>
 
   <article class="doc">
     <div class="wrap">
+      <!-- if:contactFormOpen --><!-- else:contactFormOpen -->
+      <section class="ooo" aria-labelledby="ooo-title">
+        <div class="tape tape--a" aria-hidden="true"><div class="tape__text"><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span></div></div>
+        <h2 class="sr-only" id="ooo-title">Out of order</h2>
+        <canvas class="ooo__sign" id="ooo-sign" aria-hidden="true"></canvas>
+        <p class="ooo__text">The contact form is down for repairs. Message the team on our Discord instead and open a ticket.</p>
+        <p><a class="btn btn--tube" href="{{discordUrl}}" rel="noopener" target="_blank" data-pulse>Join the {{gameName}} Discord</a></p>
+        <div class="tape tape--b" aria-hidden="true"><div class="tape__text"><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span><span>CAUTION</span><span>OUT OF ORDER</span></div></div>
+      </section>
+      <div class="contact-locked" inert aria-hidden="true">
+      <!-- endif:contactFormOpen -->
       <form class="contact" id="contact-form" data-endpoint="https://formsubmit.co/ajax/{{contactFormId}}" data-key="{{web3formsKey}}" novalidate>
         <fieldset class="contact__reasons">
           <legend>What's it about?</legend>
@@ -73,6 +88,7 @@
         </div>
         <p class="contact__status" id="c-status" role="status" aria-live="polite"></p>
       </form>
+      <!-- if:contactFormOpen --><!-- else:contactFormOpen --></div><!-- endif:contactFormOpen -->
 
       <div class="contact__done" id="contact-done" hidden tabindex="-1">
         <h2>Message sent</h2>

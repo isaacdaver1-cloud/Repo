@@ -80,6 +80,10 @@ Sending uses [Web3Forms](https://web3forms.com) when `web3formsKey` is set in
 `site.config.json` (free, 250 messages a month), and falls back to
 [FormSubmit](https://formsubmit.co) if Web3Forms fails or no key is set.
 
+While `contactFormOpen` is `false`, the contact page shows caution tape, an
+"Out of order" sign and a Discord invite instead of a working form. Set it to
+`true` once the Web3Forms key is in.
+
 **To get a Web3Forms key:** go to web3forms.com, enter hivemindgeneration@gmail.com
 and create an access key. It arrives by email. Put it in `web3formsKey`. The key is
 meant to be public, so it's fine in the page.

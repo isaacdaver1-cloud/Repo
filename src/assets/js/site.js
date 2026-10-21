@@ -209,6 +209,10 @@
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (reduce) return;
+      if (link.target === "_blank") { // opens in a new tab: play the effect, let the browser open it now
+        link.classList.remove("is-pressing"); void link.offsetWidth; link.classList.add("is-pressing");
+        return;
+      }
       e.preventDefault();
       var href = link.href;
       link.classList.remove("is-pressing");
