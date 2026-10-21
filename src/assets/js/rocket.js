@@ -541,7 +541,8 @@ function start() {
     const isLaunched = target > 0.985;
     if (isLaunched !== launched) { html.classList.toggle("launching", !isLaunched); launched = isLaunched; }
 
-    if (!onScreen) return;
+    const sound = window.echoSound;
+    if (!onScreen) { if (sound) sound.engine({ thrust: 0, height: 0, bank: 0, visible: false }); return; }
 
     // state from progress
     const thrust = smooth(0.09, 0.2, p);
@@ -582,6 +583,7 @@ function start() {
     nebula.material.uniforms.uTime.value = time;
 
     emitters(dt, { thrust, rocketY, bank, prevY: prevRocketY, lookY: 2.3 + follow });
+    if (sound) sound.engine({ thrust, height: rocketY, bank, visible: true });
     prevRocketY = rocketY;
     updateParticles(dt);
 
