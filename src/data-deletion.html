@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<!-- @include head.html -->
+<title>Delete your data | {{gameName}}</title>
+<meta name="description" content="How to ask for your {{gameName}} account and personal data to be deleted.">
+<link rel="canonical" href="{{siteUrl}}/data-deletion.html">
+<meta property="og:title" content="Delete your data | {{gameName}}">
+<meta property="og:url" content="{{siteUrl}}/data-deletion.html">
+</head>
+<body>
+<!-- @include nav.html -->
+<main id="main" class="doc-page" tabindex="-1">
+  <header class="doc-head">
+    <div class="wrap">
+      <h1>Delete your data</h1>
+      <p>Ask us to delete your {{gameName}} account and the personal data that comes with it.</p>
+    </div>
+  </header>
+
+  <article class="doc">
+    <div class="wrap">
+      <h2>How to ask</h2>
+      <ol class="steps">
+        <li>Email <a href="mailto:{{contactEmail}}?subject=Delete%20my%20{{gameName}}%20data">{{contactEmail}}</a> with the subject "Delete my {{gameName}} data". You can also use the button below.</li>
+        <li>Include your in-game name and your Meta username, so we can find your account. Parents and carers can ask on behalf of their child.</li>
+        <li>We reply within 7 days to confirm the request. If we need to check that the account is yours, we will ask one simple question.</li>
+        <li>We delete your data within 30 days of confirming, and email you when it is done.</li>
+      </ol>
+      <p><a class="btn btn--tube" href="mailto:{{contactEmail}}?subject=Delete%20my%20{{gameName}}%20data&amp;body=In-game%20name%3A%20%0AMeta%20username%3A%20%0A%0APlease%20delete%20my%20{{gameName}}%20account%20and%20data.">Email a deletion request</a></p>
+
+      <h2>What gets deleted</h2>
+      <ul>
+        <li>Your {{gameName}} game account and player ID in PlayFab</li>
+        <li>Your in-game name, progress, statistics, cosmetics, inventory and currency balance</li>
+        <li>Any other personal data we hold about you, including support emails</li>
+      </ul>
+      <p>Voice chat and avatar movement are never stored, so there is nothing to delete there. Photon only holds connection data for as long as you are online.</p>
+
+      <h2>What we may have to keep</h2>
+      <ul>
+        <li>Purchase records, for up to 6 years, because accounting and tax law requires it. These are kept separately and are not linked to your gameplay.</li>
+        <li>A short record that an account was banned and why, if it was, so the ban cannot be avoided by deleting and starting again. This is kept for up to 12 months.</li>
+        <li>Statistics that have been combined and anonymised so they no longer identify you.</li>
+      </ul>
+
+      <div class="callout">
+        <p><strong>Deletion is permanent.</strong> Your progress, items and any virtual currency cannot be restored afterwards, and purchases are not refunded because of a deletion request.</p>
+      </div>
+
+      <h2>Your Meta account</h2>
+      <p>Your Meta account and the data Meta holds are managed by Meta, not by us. Uninstalling {{gameName}} does not delete your {{gameName}} account. To manage or delete your Meta account, use the Meta Accounts Center or the Meta Horizon app.</p>
+
+      <p>More detail is in our <a href="/privacy.html">privacy policy</a>.</p>
+    </div>
+  </article>
+</main>
+<!-- @include footer.html -->
+</body>
+</html>

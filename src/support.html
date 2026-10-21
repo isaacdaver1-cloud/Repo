@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<!-- @include head.html -->
+<title>Support | {{gameName}}</title>
+<meta name="description" content="Get help with {{gameName}}: contact the team, report a player, report a bug, appeal a ban or ask about a purchase.">
+<link rel="canonical" href="{{siteUrl}}/support.html">
+<meta property="og:title" content="Support | {{gameName}}">
+<meta property="og:url" content="{{siteUrl}}/support.html">
+</head>
+<body>
+<!-- @include nav.html -->
+<main id="main" class="doc-page" tabindex="-1">
+  <header class="doc-head">
+    <div class="wrap">
+      <h1>Support</h1>
+      <p>Email <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>. We aim to reply within 3 working days.</p>
+    </div>
+  </header>
+
+  <article class="doc">
+    <div class="wrap">
+      <h2 id="report">Report a player</h2>
+      <p>If someone is harassing you, making you feel unsafe, cheating or breaking the <a href="/community-guidelines.html">community guidelines</a>:</p>
+      <ol class="steps">
+        <li>Mute them straight away so you no longer hear them, and leave the room if you want to.</li>
+        <li>Report them from your headset: press the Meta button on your right controller, then choose Report. This sends the report, with a short recording if available, to Meta.</li>
+        <li>Also email <a href="mailto:{{contactEmail}}?subject={{gameName}}%20player%20report">{{contactEmail}}</a> with the player's in-game name, roughly when it happened, which room you were in, and what happened. A screenshot or video helps.</li>
+      </ol>
+      <div class="callout">
+        <p>If anyone is in immediate danger, contact your local emergency services first. If someone in the game asks a young player for photos, personal details, or to talk on another app, report it to us and to Meta straight away.</p>
+      </div>
+
+      <h2 id="bugs">Report a bug</h2>
+      <p>Email us with your headset model, what you were doing, what you expected and what happened instead. Include the game version from the settings menu if you can.</p>
+
+      <h2 id="purchases">Purchases and refunds</h2>
+      <p>All purchases go through the Meta Horizon Store, so refunds are handled by Meta under its refund policy. If an item you bought did not appear in the game, email us with your in-game name, the item and the date, and we will fix it.</p>
+
+      <h2 id="appeals">Appeal a ban</h2>
+      <p>Email <a href="mailto:{{contactEmail}}?subject={{gameName}}%20ban%20appeal">{{contactEmail}}</a> with your in-game name and why you think the decision was wrong. A different person from the one who made the decision reviews each appeal where possible.</p>
+
+      <h2 id="privacy">Privacy and your data</h2>
+      <p>Read the <a href="/privacy.html">privacy policy</a>, or go straight to <a href="/data-deletion.html">deleting your data</a>.</p>
+
+      <h2 id="parents">Parents and carers</h2>
+      <p>Meta Quest has parental supervision tools that let you approve apps, set time limits and control who your child can talk to. You can also email us about your child's account at any time, including to ask what data we hold or to have it deleted.</p>
+    </div>
+  </article>
+</main>
+<!-- @include footer.html -->
+</body>
+</html>

@@ -1,0 +1,22 @@
+Copyright (c) 2026 Echo. All rights reserved.
+
+This repository and everything in it, including the Echo name and logo, the
+website's source code, design, text, images, screenshots and other assets,
+is proprietary and confidential.
+
+No licence is granted. You may not copy, modify, distribute, publish, sell,
+sublicense, reverse engineer or create derivative works from any part of this
+repository, in whole or in part, without prior written permission from the
+copyright holder.
+
+Being able to view this repository does not give you any rights to use it.
+
+------------------------------------------------------------------------------
+Third-party components included in this repository keep their own licences:
+
+- three.js (src/assets/vendor/three.module.min.js)
+  MIT License, see src/assets/vendor/three-LICENSE.txt
+- Big Shoulders Display font (src/assets/fonts/big-shoulders-display.woff)
+  SIL Open Font License 1.1, see src/assets/fonts/OFL-BigShoulders.txt
+- Atkinson Hyperlegible font (src/assets/fonts/atkinson-*.woff)
+  SIL Open Font License 1.1, see src/assets/fonts/OFL-Atkinson.txt

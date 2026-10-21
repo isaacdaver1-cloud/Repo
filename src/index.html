@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<script src="/assets/js/boot.js"></script>
+<!-- @include head.html -->
+<title>{{gameName}}: multiplayer VR on a space station, for Meta Quest</title>
+<meta name="description" content="{{gameName}} is a multiplayer VR game for Meta Quest. Meet your crew on a space station at the edge of an orange nebula, talk with voice chat and fight in the arena.">
+<link rel="canonical" href="{{siteUrl}}/">
+<meta property="og:title" content="{{gameName}}: multiplayer VR on a space station">
+<meta property="og:description" content="Meet your crew on a space station at the edge of an orange nebula. Coming to Meta Quest.">
+<meta property="og:url" content="{{siteUrl}}/">
+<link rel="modulepreload" href="/assets/vendor/three.module.min.js">
+<script type="module" src="/assets/js/rocket.js"></script>
+</head>
+<body>
+<!-- @include nav.html -->
+
+<section class="launch" id="launch" aria-label="Launch intro">
+  <div class="launch__stage">
+    <canvas class="launch__canvas" id="rocket" aria-hidden="true"></canvas>
+    <p class="launch__title" id="launch-title">Next stop, the {{gameName}} station</p>
+    <a class="btn btn--ghost launch__skip" href="#main" id="skip-intro">Skip intro</a>
+    <div class="launch__hint" id="launch-hint">
+      <span>Scroll to launch</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="launch__clouds" id="launch-clouds"></div>
+  </div>
+</section>
+
+<div class="under">
+<main id="main" tabindex="-1">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <h1 class="hero__mark" id="hero-title">ECHO</h1>
+      <span class="hero__tube" aria-hidden="true"></span>
+      <p class="hero__lede">A multiplayer VR game on a space station at the edge of an orange nebula. Find your crew, talk, play and fight in the arena.</p>
+      <div class="hero__actions">
+        <!-- if:metaStoreUrl -->
+        <a class="btn btn--tube" href="{{metaStoreUrl}}" rel="noopener" target="_blank">Get {{gameName}} on Meta Quest</a>
+        <!-- else:metaStoreUrl -->
+        <span class="btn btn--tube" aria-disabled="true">Coming soon to Meta Quest</span>
+        <!-- endif:metaStoreUrl -->
+        <!-- if:discordUrl -->
+        <a class="btn btn--ghost" href="{{discordUrl}}" rel="noopener" target="_blank">Join the Discord</a>
+        <!-- else:discordUrl -->
+        <a class="btn btn--ghost" href="#decks">Tour the station</a>
+        <!-- endif:discordUrl -->
+      </div>
+      <p class="hero__note">For Meta Quest headsets. Online multiplayer with voice chat.</p>
+    </div>
+  </section>
+
+  <div class="stripe" aria-hidden="true"></div>
+
+  <section class="section" id="decks" aria-labelledby="decks-title">
+    <div class="wrap">
+      <h2 id="decks-title">Deck directory</h2>
+      <p class="section__intro">Where to find everyone on board. Select a picture to see it full size.</p>
+
+      <ol class="decks">
+        <li class="deck deck--wide">
+          <button class="viewport" type="button" data-full="/assets/img/station-hub.jpg" data-caption="The Hub">
+            <picture>
+              <source srcset="/assets/img/station-hub.webp" type="image/webp">
+              <img src="/assets/img/station-hub.jpg" width="1234" height="410" alt="The round main deck of the station, with fog on the floor, pumpkins, neon lights and screens around the walls" fetchpriority="low">
+            </picture>
+          </button>
+          <div class="deck__text">
+            <h3 class="deck__name"><span class="deck__level">Main deck</span>The Hub</h3>
+            <p>The round room where every session starts. Screens, neon tubes and windows out to the nebula on every side, and right now it is dressed up for Halloween with pumpkins and fog.</p>
+          </div>
+        </li>
+
+        <li class="deck">
+          <button class="viewport" type="button" data-full="/assets/img/fighting-arena.jpg" data-caption="Fighting Arena">
+            <picture>
+              <source srcset="/assets/img/fighting-arena.webp" type="image/webp">
+              <img src="/assets/img/fighting-arena.jpg" width="863" height="314" alt="The glowing Fighting Arena sign over a blue hexagon screen" loading="lazy">
+            </picture>
+          </button>
+          <div class="deck__text">
+            <h3 class="deck__name"><span class="deck__level">Combat deck</span>Fighting Arena</h3>
+            <p>Head under the sign when you want to settle things. The arena is where matches start.</p>
+          </div>
+        </li>
+
+        <li class="deck">
+          <button class="viewport" type="button" data-full="/assets/img/message-board.jpg" data-caption="Message board">
+            <picture>
+              <source srcset="/assets/img/message-board.webp" type="image/webp">
+              <img src="/assets/img/message-board.jpg" width="944" height="484" alt="A holographic message of the day board floating beside a maintenance panel" loading="lazy">
+            </picture>
+          </button>
+          <div class="deck__text">
+            <h3 class="deck__name"><span class="deck__level">Main deck</span>Message board</h3>
+            <p>Check the message of the day for news, events and updates from the team. Flip through newer and older posts right from the board.</p>
+          </div>
+        </li>
+
+        <li class="deck">
+          <button class="viewport" type="button" data-full="/assets/img/crew-lounge.jpg" data-caption="Crew lounge">
+            <picture>
+              <source srcset="/assets/img/crew-lounge.webp" type="image/webp">
+              <img src="/assets/img/crew-lounge.jpg" width="1056" height="475" alt="Neon-striped crates and candles in a quiet corner of the station by the windows" loading="lazy">
+            </picture>
+          </button>
+          <div class="deck__text">
+            <h3 class="deck__name"><span class="deck__level">Lower deck</span>Crew lounge</h3>
+            <p>A quieter corner by the big windows. Good for hanging out and talking with your crew between matches.</p>
+          </div>
+        </li>
+
+        <li class="deck">
+          <button class="viewport" type="button" data-full="/assets/img/observation-deck.jpg" data-caption="Observation deck">
+            <picture>
+              <source srcset="/assets/img/observation-deck.webp" type="image/webp">
+              <img src="/assets/img/observation-deck.jpg" width="1128" height="457" alt="Looking up through the ceiling windows at stars and the orange nebula, with cobwebs in the corners" loading="lazy">
+            </picture>
+          </button>
+          <div class="deck__text">
+            <h3 class="deck__name"><span class="deck__level">Upper deck</span>Observation deck</h3>
+            <p>Look up. The ceiling windows open straight onto the stars and the nebula the station orbits.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section crew" id="crew" aria-labelledby="crew-title">
+    <div class="wrap crew__grid">
+      <div>
+        <h2 id="crew-title">Play safe with your crew</h2>
+        <p class="section__intro">{{gameName}} is online and has live voice chat with other players. These are the tools and rules that keep the station a good place to be.</p>
+        <p><a href="/community-guidelines.html">Read the community guidelines</a></p>
+      </div>
+      <ul class="rules">
+        <li>
+          <h3>Mute anyone, any time</h3>
+          <p>You can mute a player so you no longer hear them. You can also leave a room whenever you want.</p>
+        </li>
+        <li>
+          <h3>Report players who break the rules</h3>
+          <p>Report from your headset with the Meta Quest report tool, or <a href="/support.html#report">send us a report</a> with the player's name and what happened.</p>
+        </li>
+        <li>
+          <h3>For parents and carers</h3>
+          <p>Meta controls who can use Quest apps and offers parental supervision tools. Our <a href="/privacy.html#children">privacy policy</a> explains what data the game uses and how to ask us to delete it.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 id="faq-title">Questions</h2>
+      <div class="faq">
+        <details>
+          <summary>What do I need to play?</summary>
+          <div><p>A Meta Quest headset, a Meta account and an internet connection. {{gameName}} is online multiplayer, so you need to be connected to play with others.</p></div>
+        </details>
+        <details>
+          <summary>Is there voice chat?</summary>
+          <div><p>Yes. Players in the same room can hear each other. You can mute anyone you don't want to hear. Voice is streamed live and is not recorded by us.</p></div>
+        </details>
+        <details>
+          <summary>How do I report someone?</summary>
+          <div><p>Use the Meta Quest report tool from your headset, or follow the steps on our <a href="/support.html#report">support page</a>. Include the player's name and what happened.</p></div>
+        </details>
+        <details>
+          <summary>How do I get my data deleted?</summary>
+          <div><p>Follow the steps on the <a href="/data-deletion.html">data deletion page</a>. We delete your account data within 30 days of confirming the request.</p></div>
+        </details>
+        <details>
+          <summary>How do I contact the team?</summary>
+          <div><p>Email <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>. More options are on the <a href="/support.html">support page</a>.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- @include footer.html -->
+</div>
+
+<dialog class="lightbox" id="lightbox" aria-label="Screenshot">
+  <button class="btn btn--ghost lightbox__close" type="button" id="lightbox-close">Close</button>
+  <figure>
+    <img id="lightbox-img" src="data:," alt="">
+    <figcaption id="lightbox-cap"></figcaption>
+  </figure>
+</dialog>
+</body>
+</html>

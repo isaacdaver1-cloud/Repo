@@ -1,0 +1,21 @@
+{
+  "name": "echo-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Official website for Echo, a multiplayer VR game for Meta Quest.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:lite": "node scripts/build.mjs --lite",
+    "preview": "node scripts/build.mjs --lite && node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "html-minifier-terser": "^7.2.0",
+    "javascript-obfuscator": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{siteUrl}}/</loc><priority>1.0</priority></url>
+  <url><loc>{{siteUrl}}/support.html</loc></url>
+  <url><loc>{{siteUrl}}/privacy.html</loc></url>
+  <url><loc>{{siteUrl}}/terms.html</loc></url>
+  <url><loc>{{siteUrl}}/data-deletion.html</loc></url>
+  <url><loc>{{siteUrl}}/community-guidelines.html</loc></url>
+  <url><loc>{{siteUrl}}/copyright.html</loc></url>
+</urlset>
