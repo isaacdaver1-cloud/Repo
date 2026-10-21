@@ -94,10 +94,37 @@
       .then(function (r) {
         clearTimeout(timer);
         if (r.ok && String(r.data.success) === "true") finish();
-        else fail(r.data && r.data.message);
+        else if (r.data && /activat/i.test(String(r.data.message || ""))) {
+          // first ever message: FormSubmit wants the inbox owner to click its activation link
+          finish();
+        }
+        else classicSend(payload);
       })
-      .catch(function () { clearTimeout(timer); fail(); });
+      .catch(function () { clearTimeout(timer); classicSend(payload); });
   });
+
+  // Fallback: a normal form submission straight to FormSubmit. It doesn't depend on the
+  // browser allowing a background request, and FormSubmit sends the visitor back here.
+  function classicSend(payload) {
+    status.textContent = "Sending another way...";
+    var endpoint = form.getAttribute("data-endpoint").replace("/ajax/", "/");
+    var back = location.origin + location.pathname + "?sent=1";
+    var f = document.createElement("form");
+    f.method = "POST"; f.action = endpoint; f.hidden = true;
+    var data = Object.assign({}, payload, { _next: back });
+    Object.keys(data).forEach(function (k) {
+      var i = document.createElement("input");
+      i.type = "hidden"; i.name = k; i.value = data[k];
+      f.appendChild(i);
+    });
+    document.body.appendChild(f);
+    try { f.submit(); } catch (e) { fail(); }
+  }
+
+  // came back from the fallback route
+  if (new URLSearchParams(location.search).get("sent") === "1") {
+    form.hidden = true; done.hidden = false;
+  }
 
   function finish() {
     if (window.echoSound) window.echoSound.play("charge");
