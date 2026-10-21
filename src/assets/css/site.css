@@ -783,36 +783,90 @@ html.launching .sound[aria-pressed="false"] { animation: sound-nudge 2.4s ease-i
 }
 
 /* ===== scrollbar ===== */
-/* Chrome, Edge, Safari, Opera: a neon tube sliding in a dark rail */
+/* Native scrollbar, used on touch screens and if the script doesn't run */
 ::-webkit-scrollbar { width: 14px; height: 14px; }
-::-webkit-scrollbar-track {
-  background:
-    linear-gradient(90deg, transparent 5px, rgba(242, 227, 74, 0.08) 5px 9px, transparent 9px),
-    linear-gradient(90deg, #0d0507, #1c0b0d 50%, #0d0507);
-  border-left: 1px solid rgba(246, 235, 230, 0.08);
-}
+::-webkit-scrollbar-track { background: linear-gradient(90deg, #0d0507, #1c0b0d 50%, #0d0507); }
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 10px;
   background:
     repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.35) 0 4px, transparent 4px 8px) padding-box,
     linear-gradient(90deg, #c9b52a, #fff07a 45%, #f2e34a 60%, #b8a224) padding-box;
-  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.4);
-}
-::-webkit-scrollbar-thumb:hover {
-  background:
-    repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.3) 0 4px, transparent 4px 8px) padding-box,
-    linear-gradient(90deg, #e0cc3a, #fffbc0 45%, #fff07a 60%, #d4bc30) padding-box;
-}
-::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(90deg, var(--ember), #ffb070 50%, var(--ember)) padding-box;
 }
 ::-webkit-scrollbar-button { display: none; }
-::-webkit-scrollbar-corner { background: #0d0507; }
-/* Firefox only (Chrome ignores the styles above if scrollbar-color is set) */
-@supports (-moz-appearance: none) {
-  html { scrollbar-color: var(--tube) #12060a; scrollbar-width: auto; }
+@supports (-moz-appearance: none) { html { scrollbar-color: var(--tube) #12060a; } }
+
+/* Custom scrollbar (mouse/trackpad): the native one is hidden and replaced by a rail with a
+   springy neon tube that slams into the ends */
+html.cscroll { scrollbar-width: none; }
+html.cscroll::-webkit-scrollbar { display: none; }
+.rail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  z-index: 70;
+  background:
+    linear-gradient(90deg, transparent 6px, rgba(242, 227, 74, 0.08) 6px 10px, transparent 10px),
+    linear-gradient(90deg, rgba(13, 5, 7, 0.85), rgba(28, 11, 13, 0.85) 50%, rgba(13, 5, 7, 0.85));
+  border-left: 1px solid rgba(246, 235, 230, 0.08);
+  cursor: pointer;
+  touch-action: none;
 }
+.rail__thumb {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 0;
+  min-height: 36px;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.35) 0 4px, transparent 4px 8px),
+    linear-gradient(90deg, #c9b52a, #fff07a 45%, #f2e34a 60%, #b8a224);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.45), 0 0 10px rgba(242, 227, 74, 0.35);
+  cursor: grab;
+  will-change: transform;
+  transition: box-shadow 0.2s, filter 0.2s;
+}
+.rail:hover .rail__thumb { box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.5), 0 0 16px rgba(242, 227, 74, 0.7); filter: brightness(1.1); }
+.rail.dragging .rail__thumb {
+  cursor: grabbing;
+  background:
+    repeating-linear-gradient(-45deg, rgba(20, 16, 16, 0.3) 0 4px, transparent 4px 8px),
+    linear-gradient(90deg, #d0501e, #ffb070 50%, #d0501e);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.5), 0 0 20px rgba(232, 100, 42, 0.8);
+}
+html.rail-grabbing, html.rail-grabbing * { cursor: grabbing !important; user-select: none !important; }
+/* impact flash and sparks at the end it hit */
+.rail__flash {
+  position: absolute;
+  left: -40px;
+  right: -6px;
+  height: 90px;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(60% 50% at 80% 0%, rgba(255, 245, 190, 0.95), rgba(242, 227, 74, 0.5) 30%, transparent 70%);
+}
+.rail__flash--top { top: 0; }
+.rail__flash--bottom { bottom: 0; transform: scaleY(-1); }
+.rail__flash.hit { animation: rail-flash 0.5s ease-out; }
+@keyframes rail-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+.rail__spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fffbe0;
+  box-shadow: 0 0 6px 2px rgba(242, 227, 74, 0.9);
+  pointer-events: none;
+}
+html.slam-top #main, html.slam-top .foot { animation: slam-top 0.35s cubic-bezier(0.3, 0.6, 0.4, 1); }
+html.slam-bottom #main, html.slam-bottom .foot { animation: slam-bottom 0.35s cubic-bezier(0.3, 0.6, 0.4, 1); }
+@keyframes slam-top { 0% { transform: translateY(0); } 25% { transform: translateY(9px); } 55% { transform: translateY(-3px); } 100% { transform: none; } }
+@keyframes slam-bottom { 0% { transform: translateY(0); } 25% { transform: translateY(-9px); } 55% { transform: translateY(3px); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { html.slam-top body, html.slam-bottom #main, html.slam-bottom .foot { animation: none; } }
+html.cscroll .sound { right: 26px; }
 
 /* ===== background atmosphere ===== */
 .fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }

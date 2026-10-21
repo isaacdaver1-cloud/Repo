@@ -116,6 +116,12 @@
       tone("square", 1800, 1500, 0.03, 0.06);
       tone("sine", 900, 1200, 0.07, 0.1, 0.02);
     },
+    // scrollbar slamming into the end: low thud and a metal clank
+    slam: function () {
+      tone("sine", 140, 40, 0.25, 0.5);
+      tone("square", 520, 300, 0.08, 0.06, 0.005);
+      hiss("bandpass", 2400, 900, 3, 0.12, 0.2);
+    },
     // rocket ignition thump
     ignite: function () {
       tone("sine", 90, 28, 0.9, 0.7);

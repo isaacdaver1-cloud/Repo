@@ -273,6 +273,136 @@
     }, true);
   })();
 
+  // ---------- custom scrollbar: springy, draggable, slams into the top and bottom ----------
+  (function () {
+    var fine = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+    if (!fine) return; // phones and tablets keep their own scrollbar
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var html = document.documentElement;
+    html.classList.add("cscroll");
+
+    var rail = document.createElement("div");
+    rail.className = "rail"; rail.setAttribute("aria-hidden", "true");
+    var thumb = document.createElement("div"); thumb.className = "rail__thumb";
+    var flashTop = document.createElement("div"); flashTop.className = "rail__flash rail__flash--top";
+    var flashBot = document.createElement("div"); flashBot.className = "rail__flash rail__flash--bottom";
+    rail.append(flashTop, flashBot, thumb);
+    document.body.appendChild(rail);
+
+    var y = 0, v = 0, h = 40, squash = 0, squashV = 0;
+    var lastScroll = window.scrollY, scrollVel = 0, lastT = performance.now();
+    var dragging = false, grabOffset = 0, running = false;
+
+    function metrics() {
+      var doc = document.documentElement;
+      var view = window.innerHeight, total = doc.scrollHeight;
+      var max = Math.max(1, total - view);
+      h = Math.max(36, view * (view / total));
+      thumb.style.height = h + "px";
+      return { view: view, max: max, travel: view - h };
+    }
+    function targetY(m) { return (window.scrollY / m.max) * m.travel; }
+
+    function spark(atTop) {
+      var r = rail.getBoundingClientRect();
+      for (var i = 0; i < 9; i++) {
+        var s = document.createElement("span");
+        s.className = "rail__spark";
+        s.style.left = (r.width / 2 - 2) + "px";
+        s.style.top = atTop ? "2px" : (r.height - 6) + "px";
+        rail.appendChild(s);
+        var ang = (atTop ? 1 : -1) * (0.15 + Math.random() * 0.7) * Math.PI;
+        var dist = 30 + Math.random() * 60;
+        var dx = -Math.abs(Math.cos(ang)) * dist, dy = Math.sin(ang) * dist;
+        s.animate([
+          { transform: "translate(0,0) scale(1)", opacity: 1 },
+          { transform: "translate(" + dx + "px," + dy + "px) scale(0.2)", opacity: 0 },
+        ], { duration: 380 + Math.random() * 260, easing: "cubic-bezier(0.2,0.7,0.4,1)" }).onfinish = (function (n) { return function () { n.remove(); }; })(s);
+      }
+    }
+    function slam(atTop, strength) {
+      squashV += (atTop ? 1 : -1) * Math.min(1.2, strength) * 22; // thumb squashes against the end
+      if (reduce) return;
+      var f = atTop ? flashTop : flashBot;
+      f.classList.remove("hit"); void f.offsetWidth; f.classList.add("hit");
+      spark(atTop);
+      var cls = atTop ? "slam-top" : "slam-bottom";
+      html.classList.remove("slam-top", "slam-bottom"); void html.offsetWidth; html.classList.add(cls);
+      setTimeout(function () { html.classList.remove(cls); }, 380);
+      if (window.echoSound) window.echoSound.play("slam");
+    }
+
+    function tick(now) {
+      var dt = Math.min(0.05, (now - lastT) / 1000) || 0.016; lastT = now;
+      var m = metrics();
+      // scroll speed, for deciding how hard the slam is
+      var sy = window.scrollY;
+      var inst = (sy - lastScroll) / dt;
+      scrollVel = scrollVel * 0.6 + inst * 0.4;
+      var atTopNow = sy <= 0, atBotNow = sy >= m.max - 1;
+      var wasTop = lastScroll <= 0, wasBot = lastScroll >= m.max - 1;
+      if (atTopNow && !wasTop && scrollVel < -400) slam(true, -scrollVel / 2500);
+      if (atBotNow && !wasBot && scrollVel > 400) slam(false, scrollVel / 2500);
+      lastScroll = sy;
+
+      // the thumb trails behind the real position on a spring (the "drag")
+      var t = targetY(m);
+      if (dragging || reduce) { y = t; v = 0; }
+      else {
+        var k = 180, d = 20;
+        v += ((t - y) * k - v * d) * dt;
+        y += v * dt;
+      }
+      // squash and stretch: stretches with speed, squashes on impact, springs back
+      var stretch = Math.min(0.5, Math.abs(v) / 4000);
+      squashV += (-squash * 260 - squashV * 16) * dt;
+      squash += squashV * dt;
+      var sq = Math.max(-0.45, Math.min(0.45, squash / 40));
+      var scaleY = 1 + stretch - Math.abs(sq);
+      var origin = sq > 0 ? "top" : sq < 0 ? "bottom" : (v < 0 ? "bottom" : "top");
+      var shown = Math.max(0, Math.min(m.travel, y));
+      thumb.style.transformOrigin = "50% " + (origin === "top" ? "0%" : "100%");
+      thumb.style.transform = "translateY(" + shown.toFixed(2) + "px) scale(" + (1 + Math.abs(sq) * 0.35).toFixed(3) + "," + scaleY.toFixed(3) + ")";
+
+      var settled = Math.abs(t - y) < 0.3 && Math.abs(v) < 2 && Math.abs(squash) < 0.05 && Math.abs(squashV) < 0.05 && Math.abs(scrollVel) < 5;
+      if (settled && !dragging) { running = false; scrollVel = 0; return; }
+      requestAnimationFrame(tick);
+    }
+    function wake() { if (!running) { running = true; lastT = performance.now(); requestAnimationFrame(tick); } }
+    window.addEventListener("scroll", wake, { passive: true });
+    window.addEventListener("resize", wake);
+    if (window.ResizeObserver) new ResizeObserver(wake).observe(document.body);
+    wake();
+
+    // drag the thumb
+    thumb.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      dragging = true;
+      grabOffset = e.clientY - thumb.getBoundingClientRect().top;
+      thumb.setPointerCapture(e.pointerId);
+      rail.classList.add("dragging"); html.classList.add("rail-grabbing");
+      wake();
+    });
+    thumb.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var m = metrics();
+      var pos = Math.max(0, Math.min(m.travel, e.clientY - grabOffset));
+      window.scrollTo(0, (pos / m.travel) * m.max);
+    });
+    function release() { dragging = false; rail.classList.remove("dragging"); html.classList.remove("rail-grabbing"); wake(); }
+    thumb.addEventListener("pointerup", release);
+    thumb.addEventListener("pointercancel", release);
+
+    // click the rail to jump there
+    rail.addEventListener("pointerdown", function (e) {
+      if (e.target !== rail || e.button !== 0) return;
+      var m = metrics();
+      var pos = Math.max(0, Math.min(m.travel, e.clientY - h / 2));
+      window.scrollTo({ top: (pos / m.travel) * m.max, behavior: reduce ? "auto" : "smooth" });
+    });
+  })();
+
   // ---------- floating space dust in the background ----------
   var dust = document.getElementById("fx-dust");
   if (dust && dust.getContext) {
