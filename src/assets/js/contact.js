@@ -1,5 +1,17 @@
 // Contact form: checks the fields, then sends the message to the team's inbox through
 // FormSubmit (formsubmit.co), so visitors don't need their own email app or account.
+// Copy the team's email address to the clipboard
+(function () {
+  var b = document.getElementById("copy-email");
+  if (!b) return;
+  b.addEventListener("click", function () {
+    var email = b.getAttribute("data-email");
+    var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy email address"; }, 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(email).then(done, function () { b.textContent = email; });
+    else b.textContent = email;
+  });
+})();
+
 // "Out of order" sign: the words drawn small, then shaded with an ordered (Bayer) dither and
 // scaled up with hard pixels, with the odd neon flicker.
 (function () {

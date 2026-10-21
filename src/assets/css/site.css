@@ -973,7 +973,7 @@ html.cscroll .sound { right: 26px; }
   position: relative;
   max-width: 720px;
   margin: 0 0 40px;
-  padding: 56px 28px 64px;
+  padding: 56px 28px 96px;
   text-align: center;
   border: 2px dashed rgba(230, 181, 44, 0.5);
   border-radius: 18px;
@@ -1023,6 +1023,17 @@ html.cscroll .sound { right: 26px; }
   border-radius: 2px;
 }
 @keyframes tape-slide { to { transform: translateX(-50%); } }
+.ooo__rule {
+  width: min(520px, 90%);
+  height: 6px;
+  margin: 36px auto 28px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--tube);
+  box-shadow: 0 0 10px var(--tube), 0 0 30px rgba(242, 227, 74, 0.5);
+}
+.ooo__prefer { margin: 0 auto 8px; font: 900 clamp(2rem, 5vw, 3rem)/1 var(--display); color: var(--text); max-width: none; }
+.ooo__email { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 0 0 8px; }
 .contact-locked { position: relative; opacity: 0.28; filter: grayscale(0.7) blur(1px); pointer-events: none; user-select: none; }
 .contact-locked::before {
   content: "";
