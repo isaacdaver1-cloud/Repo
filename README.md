@@ -21,7 +21,8 @@ Open `site.config.json` and fill in your real details. Every page reads from it.
 
 | Setting | What to put |
 | --- | --- |
-| `developerName` | Your name or studio name. It appears as the owner in the copyright notices and privacy policy. |
+| `developerName` | The studio name (HIVEMIND). It appears as the owner in the copyright notices and privacy policy. |
+| `creatorName` | Who built the game (Ivy). Shown in the footer and on the copyright page. |
 | `contactEmail` | An email you check. Meta requires a working contact for privacy and deletion requests. |
 | `siteUrl` | Your EdgeOne Pages address or custom domain, without a trailing slash. |
 | `metaStoreUrl` | Your Meta Horizon Store page, once you have it. Leave empty to show "Coming soon". |
@@ -98,4 +99,4 @@ protection (the copyright notices on every page, the copyright page and
 
 ## Licence
 
-Copyright © 2026. All rights reserved. See [LICENSE](LICENSE).
+Copyright © 2026 HIVEMIND. All rights reserved. See [LICENSE](LICENSE).
