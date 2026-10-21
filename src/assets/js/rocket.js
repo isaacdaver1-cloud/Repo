@@ -96,7 +96,7 @@ function start() {
   const key = new THREE.DirectionalLight(0xffd6a8, 2.4);
   key.position.set(6, 9, 7);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xb05cf2, 3.0);
+  const rim = new THREE.DirectionalLight(0xb05cf2, 1.6);
   rim.position.set(-7, 5, -6);
   scene.add(rim);
   const engineLight = new THREE.PointLight(0xff8a3a, 0, 22, 1.6);
@@ -153,9 +153,20 @@ function start() {
 
   // ---------- rocket ----------
   const rocket = new THREE.Group();
-  const hullMat = new THREE.MeshStandardMaterial({ color: 0xfffaf4, roughness: 0.38, metalness: 0.08 });
-  const redMat = new THREE.MeshStandardMaterial({ color: 0xb8321b, roughness: 0.5, metalness: 0.1 });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x2b2426, roughness: 0.32, metalness: 0.85, side: THREE.DoubleSide });
+  const tex = makeRocketTextures(renderer.capabilities.getMaxAnisotropy());
+  const hullMat = new THREE.MeshStandardMaterial({
+    map: tex.hull.map, bumpMap: tex.hull.bump, bumpScale: 2.2, roughnessMap: tex.hull.rough, roughness: 1, metalness: 0.05,
+  });
+  const redMat = new THREE.MeshStandardMaterial({
+    map: tex.nose.map, bumpMap: tex.nose.bump, bumpScale: 1.8, roughnessMap: tex.nose.rough, roughness: 1, metalness: 0.08,
+  });
+  const finMat = new THREE.MeshStandardMaterial({
+    map: tex.fin.map, bumpMap: tex.fin.bump, bumpScale: 1.6, roughnessMap: tex.fin.rough, roughness: 1, metalness: 0.08,
+  });
+  const nozzleMat = new THREE.MeshStandardMaterial({
+    map: tex.nozzle.map, bumpMap: tex.nozzle.bump, bumpScale: 1.2, roughness: 0.62, metalness: 0.6, side: THREE.DoubleSide,
+  });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x2e2a29, roughness: 0.7, metalness: 0.5, side: THREE.DoubleSide });
 
   const lathe = (pts, mat, seg = 48) =>
     new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg), mat);
@@ -169,9 +180,9 @@ function start() {
   rocket.add(lathe(smoothProfile([[0.77, 2.55], [0.68, 3.05], [0.5, 3.5], [0.26, 3.9], [0.0001, 4.15]]), redMat));
   rocket.add(lathe([[0.0001, 0.42], [0.6, 0.42]], darkMat));
   // nozzle bell
-  rocket.add(lathe(smoothProfile([[0.34, 0.44], [0.36, 0.3], [0.44, 0.12], [0.54, -0.02]], 16), darkMat, 32));
+  rocket.add(lathe(smoothProfile([[0.34, 0.44], [0.36, 0.3], [0.44, 0.12], [0.54, -0.02]], 16), nozzleMat, 32));
   // stripe band
-  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.795, 0.795, 0.14, 48, 1, true), redMat);
+  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.795, 0.795, 0.14, 48, 1, true), finMat);
   stripe.position.y = 1.55;
   rocket.add(stripe);
   // porthole
@@ -179,11 +190,11 @@ function start() {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 12, 32), darkMat);
   const glass = new THREE.Mesh(
     new THREE.CircleGeometry(0.2, 32),
-    new THREE.MeshStandardMaterial({ color: 0x0b2b30, emissive: 0x86e3ea, emissiveIntensity: 1.3, roughness: 0.15 })
+    new THREE.MeshStandardMaterial({ color: 0x0b2b30, emissive: 0x86e3ea, emissiveIntensity: 0.9, roughness: 0.35 })
   );
   glass.position.z = 0.01;
   port.add(ring, glass);
-  port.position.set(0, 2.15, 0.775);
+  port.position.set(0, 2.15, 0.8);
   rocket.add(port);
   // fins
   {
@@ -197,7 +208,7 @@ function start() {
     const g = new THREE.ExtrudeGeometry(s, { depth: 0.08, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2, curveSegments: 12 });
     g.translate(0, 0, -0.04);
     for (let i = 0; i < 3; i++) {
-      const fin = new THREE.Mesh(g, redMat);
+      const fin = new THREE.Mesh(g, finMat);
       const holder = new THREE.Group();
       fin.position.x = 0.6;
       fin.rotation.y = 0;
@@ -534,4 +545,210 @@ function start() {
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
+}
+
+
+// ---------- painted, weathered rocket textures (drawn once on canvases) ----------
+function makeRocketTextures(aniso) {
+  let seed = 7;
+  const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const canvas = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return [c, c.getContext("2d")]; };
+  const finish = (c, srgb) => {
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = Math.min(8, aniso || 1);
+    return t;
+  };
+  // soft blotches for paint mottling / grime
+  const mottle = (x, w, h, n, colours, rMin, rMax, aMax) => {
+    for (let i = 0; i < n; i++) {
+      const cx = rnd() * w, cy = rnd() * h, r = rMin + rnd() * (rMax - rMin);
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+      const c = colours[Math.floor(rnd() * colours.length)];
+      g.addColorStop(0, `rgba(${c},${(rnd() * aMax).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${c},0)`);
+      x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+      if (cx < r) x.fillRect(cx - r + w, cy - r, r * 2, r * 2); // wrap horizontally
+      if (cx > w - r) x.fillRect(cx - r - w, cy - r, r * 2, r * 2);
+    }
+  };
+  const grain = (x, w, h, amount) => {
+    const img = x.getImageData(0, 0, w, h), d = img.data;
+    for (let i = 0; i < d.length; i += 4) { const n = (rnd() - 0.5) * amount; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+    x.putImageData(img, 0, 0);
+  };
+  const streaks = (x, w, h, fromYs, colour, count) => {
+    for (let i = 0; i < count; i++) {
+      const sx = rnd() * w, sy = fromYs[Math.floor(rnd() * fromYs.length)], len = 30 + rnd() * 160, sw = 1 + rnd() * 4;
+      const g = x.createLinearGradient(0, sy, 0, sy + len);
+      g.addColorStop(0, `rgba(${colour},${(0.06 + rnd() * 0.14).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${colour},0)`);
+      x.fillStyle = g; x.fillRect(sx, sy, sw, len);
+    }
+  };
+  const rivetRow = (xs, w, y, step, r) => {
+    for (let px = step / 2; px < w; px += step) {
+      for (const [x, kind] of xs) {
+        if (kind === "colour") {
+          x.fillStyle = "rgba(60,50,44,0.55)"; x.beginPath(); x.arc(px, y, r + 0.8, 0, 7); x.fill();
+          x.fillStyle = "rgba(255,255,255,0.35)"; x.beginPath(); x.arc(px - r * 0.3, y - r * 0.3, r * 0.45, 0, 7); x.fill();
+        } else if (kind === "bump") {
+          const g = x.createRadialGradient(px, y, 0, px, y, r + 1);
+          g.addColorStop(0, "#fff"); g.addColorStop(1, "rgba(255,255,255,0)");
+          x.fillStyle = g; x.beginPath(); x.arc(px, y, r + 1, 0, 7); x.fill();
+        }
+      }
+    }
+  };
+  const seamH = (x, kind, w, y) => {
+    if (kind === "colour") {
+      x.fillStyle = "rgba(70,58,50,0.55)"; x.fillRect(0, y - 1, w, 2);
+      x.fillStyle = "rgba(255,255,255,0.25)"; x.fillRect(0, y + 1, w, 1);
+    } else if (kind === "bump") { x.fillStyle = "#3a3a3a"; x.fillRect(0, y - 1.5, w, 3); }
+    else { x.fillStyle = "rgba(255,255,255,0.5)"; x.fillRect(0, y - 2, w, 4); }
+  };
+  const seamV = (x, kind, px, y0, y1) => {
+    if (kind === "colour") {
+      x.fillStyle = "rgba(70,58,50,0.5)"; x.fillRect(px - 1, y0, 2, y1 - y0);
+      x.fillStyle = "rgba(255,255,255,0.22)"; x.fillRect(px + 1, y0, 1, y1 - y0);
+    } else if (kind === "bump") { x.fillStyle = "#3a3a3a"; x.fillRect(px - 1.5, y0, 3, y1 - y0); }
+    else { x.fillStyle = "rgba(255,255,255,0.5)"; x.fillRect(px - 2, y0, 4, y1 - y0); }
+  };
+
+  // ---- hull: off-white painted panels, rivets, stencils, grime, scorch at the base ----
+  const hull = (() => {
+    const W = 1024, H = 1024;
+    const [cc, c] = canvas(W, H), [bc, b] = canvas(W, H), [rc, r] = canvas(W, H);
+    c.fillStyle = "#e6ded1"; c.fillRect(0, 0, W, H);
+    mottle(c, W, H, 520, ["255,255,250", "196,184,166", "214,203,186"], 20, 90, 0.35);
+    b.fillStyle = "#808080"; b.fillRect(0, 0, W, H);
+    r.fillStyle = "rgb(200,200,200)"; r.fillRect(0, 0, W, H); // roughness ~0.78
+    mottle(r, W, H, 200, ["235,235,235", "175,175,175"], 30, 120, 0.4);
+
+    const rows = [0.12, 0.32, 0.52, 0.7, 0.86].map((v) => H - v * H); // canvas y (v=0 at bottom)
+    for (const y of rows) {
+      for (const [x, k] of [[c, "colour"], [b, "bump"], [r, "rough"]]) seamH(x, k, W, y);
+      rivetRow([[c, "colour"], [b, "bump"]], W, y - 8, 22, 2.6);
+    }
+    // vertical seams, staggered per band
+    const bands = [H, ...rows, 0];
+    bands.slice(0, -1).forEach((yTop, i) => {
+      const yBot = bands[i + 1], off = (i % 2) * (W / 12);
+      for (let k = 0; k < 6; k++) {
+        const px = (off + (k * W) / 6) % W;
+        for (const [x, kk] of [[c, "colour"], [b, "bump"], [r, "rough"]]) seamV(x, kk, px, yBot, yTop);
+        for (let py = yBot + 14; py < yTop - 8; py += 22) {
+          for (const [x, kind] of [[c, "colour"], [b, "bump"]]) {
+            if (kind === "colour") { x.fillStyle = "rgba(60,50,44,0.5)"; x.beginPath(); x.arc(px + 8, py, 2.4, 0, 7); x.fill(); }
+            else { x.fillStyle = "#e0e0e0"; x.beginPath(); x.arc(px + 8, py, 3, 0, 7); x.fill(); }
+          }
+        }
+      }
+    });
+    // access hatch
+    {
+      const hx = W * 0.6, hy = H - 0.62 * H, hw = 120, hh = 150;
+      c.strokeStyle = "rgba(70,58,50,0.6)"; c.lineWidth = 3; c.strokeRect(hx, hy, hw, hh);
+      b.strokeStyle = "#2c2c2c"; b.lineWidth = 4; b.strokeRect(hx, hy, hw, hh);
+      for (const [px, py] of [[hx + 10, hy + 10], [hx + hw - 10, hy + 10], [hx + 10, hy + hh - 10], [hx + hw - 10, hy + hh - 10]]) {
+        c.fillStyle = "rgba(60,50,44,0.6)"; c.beginPath(); c.arc(px, py, 4, 0, 7); c.fill();
+        b.fillStyle = "#ddd"; b.beginPath(); b.arc(px, py, 4, 0, 7); b.fill();
+      }
+      c.fillStyle = "rgba(150,40,22,0.85)"; c.font = "bold 20px Arial, sans-serif"; c.fillText("ACCESS", hx + 22, hy + hh / 2 + 7);
+    }
+    // stencilled name running up the side, and a hazard band near the base
+    c.save();
+    c.translate(W * 0.25, H - 0.16 * H); c.rotate(-Math.PI / 2);
+    c.fillStyle = "rgba(160,42,24,0.9)"; c.font = "900 112px Impact, 'Arial Black', sans-serif"; c.fillText("ECHO", 0, 0);
+    c.font = "bold 28px Arial, sans-serif"; c.fillStyle = "rgba(60,45,40,0.75)"; c.fillText("STATION SHUTTLE 01", 6, 36);
+    c.restore();
+    c.fillStyle = "rgba(60,45,40,0.7)"; c.font = "bold 22px Arial, sans-serif"; c.fillText("NO STEP", W * 0.78, H - 0.2 * H);
+    // worn paint chips showing bare metal
+    for (let i = 0; i < 90; i++) {
+      const px = rnd() * W, py = rnd() * H, s = 2 + rnd() * 7;
+      c.fillStyle = `rgba(140,134,126,${(0.4 + rnd() * 0.5).toFixed(2)})`;
+      c.beginPath(); c.moveTo(px, py);
+      for (let k = 0; k < 5; k++) c.lineTo(px + (rnd() - 0.5) * s * 2, py + (rnd() - 0.5) * s * 2);
+      c.fill();
+      r.fillStyle = "rgba(120,120,120,0.8)"; r.fillRect(px - s / 2, py - s / 2, s, s);
+    }
+    streaks(c, W, H, rows.map((y) => y + 6), "70,55,45", 260);
+    // scorch from engine heat at the bottom
+    const sg = c.createLinearGradient(0, H, 0, H - 0.3 * H);
+    sg.addColorStop(0, "rgba(28,18,14,0.92)"); sg.addColorStop(0.35, "rgba(60,38,26,0.5)"); sg.addColorStop(1, "rgba(80,50,30,0)");
+    c.fillStyle = sg; c.fillRect(0, H - 0.3 * H, W, 0.3 * H);
+    for (let i = 0; i < 140; i++) {
+      const px = rnd() * W, py = H - rnd() * 0.22 * H, rr = 10 + rnd() * 40;
+      const g = c.createRadialGradient(px, py, 0, px, py, rr);
+      g.addColorStop(0, `rgba(30,20,15,${(0.15 + rnd() * 0.3).toFixed(2)})`); g.addColorStop(1, "rgba(30,20,15,0)");
+      c.fillStyle = g; c.fillRect(px - rr, py - rr, rr * 2, rr * 2);
+    }
+    const rg = r.createLinearGradient(0, H, 0, H - 0.25 * H);
+    rg.addColorStop(0, "rgba(250,250,250,0.9)"); rg.addColorStop(1, "rgba(250,250,250,0)");
+    r.fillStyle = rg; r.fillRect(0, H - 0.25 * H, W, 0.25 * H);
+    grain(c, W, H, 14); grain(b, W, H, 18);
+    return { map: finish(cc, true), bump: finish(bc), rough: finish(rc) };
+  })();
+
+  // ---- red paint (nose cone): sun-faded, chipped, with ring seams ----
+  const paint = (W, H, rings, chipCount) => {
+    const [cc, c] = canvas(W, H), [bc, b] = canvas(W, H), [rc, r] = canvas(W, H);
+    c.fillStyle = "#a8301c"; c.fillRect(0, 0, W, H);
+    mottle(c, W, H, 300, ["196,72,48", "120,28,16", "150,40,24"], 14, 70, 0.45);
+    const fade = c.createLinearGradient(0, H, 0, 0);
+    fade.addColorStop(0, "rgba(255,200,180,0)"); fade.addColorStop(1, "rgba(255,200,180,0.18)");
+    c.fillStyle = fade; c.fillRect(0, 0, W, H);
+    b.fillStyle = "#808080"; b.fillRect(0, 0, W, H);
+    r.fillStyle = "rgb(185,185,185)"; r.fillRect(0, 0, W, H);
+    mottle(r, W, H, 120, ["225,225,225", "160,160,160"], 20, 80, 0.4);
+    for (const v of rings) {
+      const y = H - v * H;
+      for (const [x, k] of [[c, "colour"], [b, "bump"], [r, "rough"]]) seamH(x, k, W, y);
+      rivetRow([[c, "colour"], [b, "bump"]], W, y + 7, W / 24, 2.2);
+    }
+    for (let i = 0; i < chipCount; i++) {
+      const px = rnd() * W, py = rnd() * H, s = 2 + rnd() * 9;
+      c.fillStyle = `rgba(150,144,136,${(0.55 + rnd() * 0.4).toFixed(2)})`;
+      b.fillStyle = "#606060"; r.fillStyle = "rgba(110,110,110,0.9)";
+      for (const x of [c, b, r]) {
+        x.beginPath(); x.moveTo(px, py);
+        for (let k = 0; k < 6; k++) x.lineTo(px + (rnd() - 0.5) * s * 2, py + (rnd() - 0.5) * s * 2);
+        x.fill();
+      }
+    }
+    streaks(c, W, H, rings.map((v) => H - v * H + 4), "50,20,12", 120);
+    grain(c, W, H, 12); grain(b, W, H, 16);
+    return { cc, bc, rc };
+  };
+  const noseP = paint(512, 512, [0.3, 0.62], 70);
+  const nose = { map: finish(noseP.cc, true), bump: finish(noseP.bc), rough: finish(noseP.rc) };
+
+  const finP = paint(512, 512, [0.5], 110);
+  {
+    // scorched trailing edges on the fins
+    const c = finP.cc.getContext("2d");
+    const g = c.createLinearGradient(0, 512, 0, 300);
+    g.addColorStop(0, "rgba(30,18,12,0.75)"); g.addColorStop(1, "rgba(30,18,12,0)");
+    c.fillStyle = g; c.fillRect(0, 300, 512, 212);
+  }
+  const fin = { map: finish(finP.cc, true), bump: finish(finP.bc), rough: finish(finP.rc) };
+  for (const t of [fin.map, fin.bump, fin.rough]) t.repeat.set(1.2, 0.7);
+
+  // ---- nozzle: brushed steel with heat-tint bands ----
+  const nozzle = (() => {
+    const W = 256, H = 256;
+    const [cc, c] = canvas(W, H), [bc, b] = canvas(W, H);
+    const g = c.createLinearGradient(0, 0, 0, H); // v=0 (top of canvas after flip = exit)... bands blend anyway
+    g.addColorStop(0, "#3a3532"); g.addColorStop(0.35, "#5b4a6e"); g.addColorStop(0.55, "#a07a3c");
+    g.addColorStop(0.75, "#6a5a4a"); g.addColorStop(1, "#2c2826");
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    for (let i = 0; i < 400; i++) { c.fillStyle = `rgba(255,255,255,${(rnd() * 0.06).toFixed(3)})`; c.fillRect(rnd() * W, rnd() * H, 1, 6 + rnd() * 20); }
+    b.fillStyle = "#808080"; b.fillRect(0, 0, W, H);
+    for (let y = 16; y < H; y += 32) { b.fillStyle = "#555"; b.fillRect(0, y, W, 3); c.fillStyle = "rgba(0,0,0,0.35)"; c.fillRect(0, y, W, 2); }
+    grain(c, W, H, 18);
+    return { map: finish(cc, true), bump: finish(bc) };
+  })();
+
+  return { hull, nose, fin, nozzle };
 }
