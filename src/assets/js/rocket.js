@@ -142,56 +142,104 @@ function start() {
   }
   scene.add(planet);
 
-  // the Echo station, far away, turning slowly with blinking lights
+  // the Echo station, far away: habitat ring, hub, spokes, solar wings, dish, radiators, blinking lights
   const station = new THREE.Group();
+  const spinner = new THREE.Group(); // the part that rotates (ring + spokes)
   const stationLights = [];
   {
-    const hullM = new THREE.MeshStandardMaterial({ color: 0x8a5a4a, roughness: 0.7, metalness: 0.4 });
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.55, 16, 64), hullM);
-    const hub = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 16), hullM);
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 6, 12), hullM);
-    mast.rotation.x = Math.PI / 2;
-    station.add(ring, hub, mast);
-    for (let i = 0; i < 4; i++) {
-      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 4.2, 8), hullM);
-      spoke.rotation.z = (i / 4) * Math.PI * 2;
-      spoke.position.set(Math.sin(-spoke.rotation.z) * 2.1, Math.cos(spoke.rotation.z) * 2.1, 0);
-      station.add(spoke);
+    const T = spaceTex;
+    const hullM = new THREE.MeshStandardMaterial({ map: T.hull, bumpMap: T.hullBump, bumpScale: 1.5, roughness: 0.75, metalness: 0.35 });
+    const habM = new THREE.MeshStandardMaterial({
+      map: T.hab, bumpMap: T.habBump, bumpScale: 1.5, emissiveMap: T.habGlow, emissive: 0xffffff, emissiveIntensity: 1.4,
+      roughness: 0.7, metalness: 0.3,
+    });
+    const darkM = new THREE.MeshStandardMaterial({ color: 0x3a3436, roughness: 0.6, metalness: 0.7 });
+    const solarM = new THREE.MeshStandardMaterial({ map: T.solar, roughness: 0.35, metalness: 0.6, emissive: 0x2a1a60, emissiveIntensity: 0.4, side: THREE.DoubleSide });
+    const trussM = new THREE.MeshStandardMaterial({ map: T.truss, alphaTest: 0.5, roughness: 0.7, metalness: 0.5, side: THREE.DoubleSide });
+
+    // habitat ring
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.62, 24, 96), habM);
+    spinner.add(ring);
+    // neon tube on the front face
+    const tube = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.07, 8, 128), new THREE.MeshBasicMaterial({ color: 0xf2e34a }));
+    tube.position.z = 0.6;
+    spinner.add(tube);
+    // spokes: truss tubes with a pipe inside
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const arm = new THREE.Group();
+      const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 3.1, 6, 1, true), trussM);
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.1, 8), darkM);
+      truss.position.y = pipe.position.y = 2.25;
+      arm.add(truss, pipe);
+      arm.rotation.z = a;
+      spinner.add(arm);
     }
-    const tube = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.08, 8, 96), new THREE.MeshBasicMaterial({ color: 0xf2e34a }));
-    tube.position.z = 0.56;
-    station.add(tube);
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
-      const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xff4a3a : 0x86e3ea }));
-      l.position.set(Math.cos(a) * 4.2, Math.sin(a) * 4.2, 0.6);
-      l.userData.phase = Math.random() * 6;
-      station.add(l); stationLights.push(l);
+    // nav lights around the rim
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const l = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), new THREE.MeshBasicMaterial({ color: i % 4 === 0 ? 0xff4a3a : 0x86e3ea }));
+      l.position.set(Math.cos(a) * 4.85, Math.sin(a) * 4.85, 0);
+      l.userData.phase = i * 0.7;
+      spinner.add(l); stationLights.push(l);
     }
+    station.add(spinner);
+
+    // central hub with docking collars (does not spin)
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 2.4, 32), hullM);
+    hub.rotation.x = Math.PI / 2;
+    const capF = new THREE.Mesh(new THREE.SphereGeometry(1.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), hullM);
+    capF.rotation.x = Math.PI / 2; capF.position.z = 1.2;
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.12, 12, 48), darkM);
+    collar.position.z = 0.6;
+    const collar2 = collar.clone(); collar2.position.z = -0.6;
+    const dock = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.6, 20), darkM);
+    dock.rotation.x = Math.PI / 2; dock.position.z = 2.45;
+    const dockGlow = new THREE.Mesh(new THREE.CircleGeometry(0.28, 20), new THREE.MeshBasicMaterial({ color: 0x86e3ea }));
+    dockGlow.position.z = 2.76;
+    station.add(hub, capF, collar, collar2, dock, dockGlow);
+
+    // central mast running backwards to the power section
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 9, 6, 1, true), trussM);
+    mast.rotation.x = Math.PI / 2; mast.position.z = -5.6;
+    station.add(mast);
+    // solar wings: two big panels each side
+    for (const side of [-1, 1]) {
+      for (let k = 0; k < 2; k++) {
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.05, 1.8), solarM);
+        wing.position.set(side * (3.3), 0, -6.2 - k * 2.3);
+        const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 6), darkM);
+        boom.rotation.z = Math.PI / 2; boom.position.set(side * 0.6, 0, wing.position.z);
+        station.add(wing, boom);
+      }
+    }
+    // radiator fins
+    for (const side of [-1, 1]) {
+      const rad = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.6, 1.4), new THREE.MeshStandardMaterial({ color: 0xd8d0c8, roughness: 0.5, metalness: 0.2 }));
+      rad.position.set(0, side * 1.7, -8.6);
+      station.add(rad);
+    }
+    // communications dish
+    const dishGeo = new THREE.LatheGeometry([0, 0.3, 0.6, 0.9, 1.1].map((r) => new THREE.Vector2(r, r * r * 0.35)), 32);
+    const dish = new THREE.Mesh(dishGeo, new THREE.MeshStandardMaterial({ color: 0xe8e2da, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide }));
+    dish.rotation.x = -Math.PI / 2.6; dish.position.set(0, 1.5, -10.2);
+    const dishArm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.4, 6), darkM);
+    dishArm.position.set(0, 0.8, -10.2);
+    station.add(dish, dishArm);
+
     station.position.set(30, 20, -62);
-    station.rotation.set(0.5, -0.6, 0);
+    station.rotation.set(0.4, -0.95, 0.12);
   }
   scene.add(station);
 
-  // asteroids: lumpy low-poly rocks that tumble and drift past
+  // asteroids: smooth lumpy rocks with real craters dug into the surface
   const asteroids = [];
   {
-    const rockMat = new THREE.MeshStandardMaterial({
-      map: spaceTex.rock, bumpMap: spaceTex.rockBump, bumpScale: 3, roughness: 0.95, metalness: 0.05, flatShading: true,
-    });
+    const rockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0.04 });
     const count = small ? 9 : 18;
+    const detail = small ? 6 : 9;
     for (let i = 0; i < count; i++) {
-      const g = new THREE.IcosahedronGeometry(1, 2);
-      const p = g.attributes.position, v = new THREE.Vector3();
-      const f1 = 1.2 + Math.random() * 1.5, f2 = 3 + Math.random() * 3, ph = Math.random() * 10;
-      const squash = new THREE.Vector3(0.7 + Math.random() * 0.6, 0.6 + Math.random() * 0.5, 0.7 + Math.random() * 0.6);
-      for (let k = 0; k < p.count; k++) {
-        v.fromBufferAttribute(p, k);
-        const n = 1 + 0.22 * Math.sin(v.x * f1 + ph) * Math.cos(v.y * f1 * 1.3 + ph) + 0.08 * Math.sin(v.z * f2 + v.x * f2 + ph);
-        v.multiplyScalar(n).multiply(squash);
-        p.setXYZ(k, v.x, v.y, v.z);
-      }
-      g.computeVertexNormals();
+      const g = makeAsteroidGeometry(detail);
       const m = new THREE.Mesh(g, rockMat);
       const near = i < (small ? 2 : 4); // a few big ones close to the camera
       const size = near ? 0.9 + Math.random() * 1.1 : 0.5 + Math.random() * 2.6;
@@ -202,6 +250,9 @@ function start() {
         near ? -1 + Math.random() * 9 : -4 + Math.random() * 40,
         near ? 2 + Math.random() * 4 : -12 - Math.random() * 40
       );
+      // keep the middle clear so no rock sits behind or in front of the rocket
+      if (!near && Math.abs(m.position.x) < 10 && m.position.y < 18) m.position.x = (m.position.x < 0 ? -1 : 1) * (10 + Math.random() * 20);
+      m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
       m.userData = {
         spin: new THREE.Vector3((Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4),
         drift: new THREE.Vector3((Math.random() - 0.5) * (near ? 0.9 : 0.5), (Math.random() - 0.5) * 0.25, 0),
@@ -728,12 +779,13 @@ function start() {
 
     // set dressing
     planet.rotation.y += dt * 0.01;
-    station.rotation.z += dt * 0.12;
+    spinner.rotation.z += dt * 0.12;
     stationLights.forEach((l) => { l.visible = Math.sin(time * 3 + l.userData.phase) > -0.2; });
     for (const a of asteroids) {
       a.rotation.x += a.userData.spin.x * dt; a.rotation.y += a.userData.spin.y * dt; a.rotation.z += a.userData.spin.z * dt;
       a.position.addScaledVector(a.userData.drift, dt);
       if (a.position.x > 40) a.position.x = -40; else if (a.position.x < -40) a.position.x = 40;
+      if (a.position.z < -8 && Math.abs(a.position.x) < 9 && a.position.y < 18) a.userData.drift.x = Math.sign(a.position.x || 1) * Math.abs(a.userData.drift.x || 0.3);
     }
     meteorState.t += dt;
     if (!meteor.visible && meteorState.t > meteorState.next) {
@@ -1077,5 +1129,129 @@ function makeSpaceTextures(aniso) {
     bg.addColorStop(0, "#303030"); bg.addColorStop(0.8, "#707070"); bg.addColorStop(0.9, "#c0c0c0"); bg.addColorStop(1, "#808080");
     b.fillStyle = bg; b.beginPath(); b.arc(x, yy, rr * 1.2, 0, 7); b.fill();
   }
-  return { planet: fin(pc, true), ring: fin(rc, true), rock: fin(kc, true), rockBump: fin(bc, false) };
+  // ---- station textures ----
+  // hull: warm grey panels with seams and rivets
+  const panels = (w, h, base, cols, rows) => {
+    const [c, x] = mk(w, h), [bb, y] = mk(w, h);
+    x.fillStyle = base; x.fillRect(0, 0, w, h);
+    y.fillStyle = "#808080"; y.fillRect(0, 0, w, h);
+    for (let i = 0; i < 260; i++) {
+      const px = rnd() * w, py = rnd() * h, rr = 6 + rnd() * 30;
+      const gg = x.createRadialGradient(px, py, 0, px, py, rr);
+      const cl = rnd() < 0.5 ? "255,240,225" : "40,30,30";
+      gg.addColorStop(0, `rgba(${cl},0.12)`); gg.addColorStop(1, `rgba(${cl},0)`);
+      x.fillStyle = gg; x.fillRect(px - rr, py - rr, rr * 2, rr * 2);
+    }
+    for (let i = 0; i <= cols; i++) { const px = (i * w) / cols; x.fillStyle = "rgba(30,24,22,0.55)"; x.fillRect(px - 1, 0, 2, h); y.fillStyle = "#404040"; y.fillRect(px - 1.5, 0, 3, h); }
+    for (let j = 0; j <= rows; j++) { const py = (j * h) / rows; x.fillStyle = "rgba(30,24,22,0.55)"; x.fillRect(0, py - 1, w, 2); y.fillStyle = "#404040"; y.fillRect(0, py - 1.5, w, 3); }
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+      if (rnd() < 0.25) { x.fillStyle = `rgba(${rnd() < 0.5 ? "180,60,30" : "60,50,48"},0.35)`; x.fillRect((i * w) / cols + 2, (j * h) / rows + 2, w / cols - 4, h / rows - 4); }
+      for (const [px, py] of [[(i * w) / cols + 5, (j * h) / rows + 5], [((i + 1) * w) / cols - 5, ((j + 1) * h) / rows - 5]]) {
+        x.fillStyle = "rgba(20,16,15,0.6)"; x.beginPath(); x.arc(px, py, 1.6, 0, 7); x.fill();
+        y.fillStyle = "#d0d0d0"; y.beginPath(); y.arc(px, py, 2, 0, 7); y.fill();
+      }
+    }
+    return [c, bb];
+  };
+  const [hc, hb] = panels(512, 256, "#8d7a70", 12, 6);
+
+  // habitat ring: panels plus rows of lit windows (u runs round the ring, v round the tube)
+  const [ac, ab] = panels(2048, 128, "#9a8478", 64, 4);
+  const [gc, gl] = mk(2048, 128);
+  gl.fillStyle = "#000"; gl.fillRect(0, 0, 2048, 128);
+  const ax = ac.getContext("2d");
+  for (const vRow of [0.0, 0.18, 0.32, 0.92]) {        // outer face and front face rows
+    const y0 = 128 - vRow * 128 - 4;
+    for (let px = 6; px < 2048; px += 14) {
+      const lit = rnd() < 0.72;
+      const warm = rnd() < 0.7;
+      ax.fillStyle = "#1a1416"; ax.fillRect(px, y0, 8, 6);
+      if (lit) {
+        const colr = warm ? `rgb(255,${190 + Math.floor(rnd() * 50)},120)` : "rgb(150,235,240)";
+        gl.fillStyle = colr; gl.fillRect(px + 1, y0 + 1, 6, 4);
+        ax.fillStyle = colr; ax.fillRect(px + 1, y0 + 1, 6, 4);
+      }
+    }
+  }
+  // solar panels: dark blue-violet cells with a silver grid
+  const [sc, s2] = mk(512, 256);
+  s2.fillStyle = "#c8c2bc"; s2.fillRect(0, 0, 512, 256);
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 8; j++) {
+    const gx = i * 32, gy = j * 32;
+    const gg = s2.createLinearGradient(gx, gy, gx + 32, gy + 32);
+    gg.addColorStop(0, "#1c1f5a"); gg.addColorStop(0.5, "#2a2470"); gg.addColorStop(1, "#141640");
+    s2.fillStyle = gg; s2.fillRect(gx + 2, gy + 2, 28, 28);
+    s2.strokeStyle = "rgba(160,170,255,0.25)"; s2.lineWidth = 1;
+    s2.beginPath(); s2.moveTo(gx + 16, gy + 2); s2.lineTo(gx + 16, gy + 30); s2.stroke();
+  }
+  // truss: open lattice (alpha cut-out)
+  const [tc, t2] = mk(128, 256);
+  t2.clearRect(0, 0, 128, 256);
+  t2.strokeStyle = "#9a9088"; t2.lineWidth = 7;
+  t2.strokeRect(4, -4, 120, 264);
+  for (let y = 0; y < 256; y += 64) { t2.beginPath(); t2.moveTo(4, y); t2.lineTo(124, y + 64); t2.moveTo(124, y); t2.lineTo(4, y + 64); t2.stroke(); }
+  for (let y = 0; y <= 256; y += 64) { t2.beginPath(); t2.moveTo(0, y); t2.lineTo(128, y); t2.stroke(); }
+  const truss = fin(tc, true); truss.repeat.set(3, 2);
+
+  return {
+    planet: fin(pc, true), ring: fin(rc, true), rock: fin(kc, true), rockBump: fin(bc, false),
+    hull: fin(hc, true), hullBump: fin(hb, false),
+    hab: fin(ac, true), habBump: fin(ab, false), habGlow: fin(gc, true),
+    solar: fin(sc, true), truss,
+  };
+}
+
+
+// ---------- asteroid geometry: a merged (smooth) sphere, squashed, lumpy, with bowl craters and raised rims ----------
+function makeAsteroidGeometry(detail) {
+  const base = new THREE.IcosahedronGeometry(1, detail);
+  // merge duplicate vertices so normals are smooth across faces
+  const src = base.attributes.position;
+  const map = new Map(), verts = [], index = [];
+  for (let i = 0; i < src.count; i++) {
+    const x = src.getX(i), y = src.getY(i), z = src.getZ(i);
+    const key = Math.round(x * 1e4) + "," + Math.round(y * 1e4) + "," + Math.round(z * 1e4);
+    let id = map.get(key);
+    if (id === undefined) { id = verts.length / 3; map.set(key, id); verts.push(x, y, z); }
+    index.push(id);
+  }
+  const n = verts.length / 3;
+  const pos = new Float32Array(verts);
+  const col = new Float32Array(n * 3);
+
+  const ph = Math.random() * 10, f = 1.3 + Math.random() * 1.2;
+  const squash = [0.75 + Math.random() * 0.5, 0.6 + Math.random() * 0.45, 0.75 + Math.random() * 0.5];
+  const craters = [];
+  const cc = 5 + Math.floor(Math.random() * 6);
+  for (let k = 0; k < cc; k++) {
+    const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+    craters.push({ d, r: 0.18 + Math.random() * 0.42, depth: 0.08 + Math.random() * 0.14 });
+  }
+  const v = new THREE.Vector3();
+  const tint = 0.85 + Math.random() * 0.3;
+  for (let i = 0; i < n; i++) {
+    v.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]).normalize();
+    // broad smooth lumps
+    let r = 1 + 0.16 * Math.sin(v.x * f + ph) * Math.cos(v.y * f * 1.2 + ph * 0.7) + 0.07 * Math.sin(v.z * f * 2.1 + v.x * 1.7 + ph);
+    let shade = 0;
+    for (const c of craters) {
+      const t = Math.acos(Math.max(-1, Math.min(1, v.dot(c.d)))) / c.r;
+      if (t < 1.35) {
+        if (t < 1) { r -= c.depth * (1 - t * t); shade -= 0.35 * (1 - t); } // the bowl
+        const rim = Math.exp(-Math.pow((t - 1) / 0.18, 2));
+        r += c.depth * 0.45 * rim; shade += 0.25 * rim;                     // the raised lip
+      }
+    }
+    pos[i * 3] = v.x * r * squash[0]; pos[i * 3 + 1] = v.y * r * squash[1]; pos[i * 3 + 2] = v.z * r * squash[2];
+    // grey-brown rock, darker in the craters, lighter on the rims
+    const g = Math.max(0.05, Math.min(1, (0.2 + shade * 0.55) * tint));
+    col[i * 3] = g * 1.0; col[i * 3 + 1] = g * 0.9; col[i * 3 + 2] = g * 0.84;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  geo.setIndex(index);
+  geo.computeVertexNormals();
+  base.dispose();
+  return geo;
 }
