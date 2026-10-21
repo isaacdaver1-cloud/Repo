@@ -70,6 +70,21 @@ npm run build         # full production build into dist/
 
 `{{name}}` in any page is replaced with the matching value from `site.config.json`.
 
+## Contact form
+
+Every email link on the site opens `/contact.html`, where visitors pick a reason,
+write a description and press Send. Messages are delivered to `contactEmail`'s
+inbox by [FormSubmit](https://formsubmit.co), which needs no account.
+
+**One-time setup:** after the site deploys, send yourself a test message from the
+contact page. FormSubmit emails an activation link to hivemindgeneration@gmail.com.
+Click it, and every message after that arrives in the inbox. Messages sent before
+you activate are not delivered.
+
+To hide the email address from the page source, FormSubmit's activation email gives
+you a random code. Put it in `contactFormId` in `site.config.json` instead of the
+email address.
+
 ## Music player
 
 The record player in the bottom-left corner comes with three built-in synthwave tracks
