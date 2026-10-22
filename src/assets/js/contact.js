@@ -139,6 +139,15 @@
       }, function (e) { clearTimeout(timer); throw e; });
   }
 
+  // FormSubmit delivers the email but its reply can be blocked by the browser, which made
+  // working sends look like failures. Send it as a plain form post that doesn't need to read
+  // the reply: if the request leaves the browser, the message is on its way.
+  function sendFormSubmit(url, body) {
+    var params = new URLSearchParams();
+    Object.keys(body).forEach(function (k) { params.append(k, body[k]); });
+    return fetch(url, { method: "POST", mode: "no-cors", body: params });
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     status.textContent = "";
@@ -172,7 +181,7 @@
 
     first
       .catch(function () {
-        return post(form.getAttribute("data-endpoint"), Object.assign({
+        return sendFormSubmit(form.getAttribute("data-endpoint"), Object.assign({
           _subject: subject,
           _captcha: "false",
         }, mail ? { _replyto: mail } : {}, details));
