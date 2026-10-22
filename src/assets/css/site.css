@@ -1034,6 +1034,10 @@ html.cscroll .sound { right: 26px; }
 }
 .ooo__prefer { margin: 0 auto 8px; font: 900 clamp(2rem, 5vw, 3rem)/1 var(--display); color: var(--text); max-width: none; }
 .ooo__email { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 0 0 8px; }
+.discord-cta { max-width: 720px; margin-top: 56px; text-align: center; }
+.discord-cta .ooo__rule { margin-top: 0; }
+.discord-cta__title { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 10px; }
+.discord-cta p { margin-left: auto; margin-right: auto; }
 .contact-locked { position: relative; opacity: 0.28; filter: grayscale(0.7) blur(1px); pointer-events: none; user-select: none; }
 .contact-locked::before {
   content: "";
